@@ -8,7 +8,8 @@ function siteHostnameFromEnv(): string | null {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (!raw) return null;
   try {
-    return new URL(raw).hostname;
+    const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    return new URL(withProtocol).hostname;
   } catch {
     return null;
   }

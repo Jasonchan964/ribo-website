@@ -80,7 +80,7 @@ src/
 
 | Variable | Required | Description |
 | -------- | -------- | ----------- |
-| `NEXT_PUBLIC_SITE_URL` | Yes | 站点正式域名（SEO canonical、sitemap） |
+| `NEXT_PUBLIC_SITE_URL` | Yes | 站点正式地址（SEO）；可填 `https://域名` 或仅域名（会自动补 `https://`） |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Yes* | Cloudinary 云名称（客户端上传端点） |
 | `CLOUDINARY_CLOUD_NAME` | Yes* | 同上，服务端签名用 |
 | `CLOUDINARY_API_KEY` | Yes* | Cloudinary API Key |
