@@ -1,0 +1,84 @@
+{
+  "common": {
+    "brand": "日博RIBO",
+    "logoAlt": "日博 RIBO 企业标识",
+    "tagline": "全自动高速直线 PET 吹瓶机",
+    "localeLabel": "语言",
+    "localeCn": "中文",
+    "localeEn": "English",
+    "ctaContact": "联系我们",
+    "ctaLearnMore": "了解更多",
+    "getQuote": "获取报价"
+  },
+  "nav": {
+    "home": "首页",
+    "products": "产品中心",
+    "technology": "技术优势",
+    "about": "关于我们",
+    "contact": "联系我们"
+  },
+  "home": {
+    "meta": {
+      "title": "RIBO | 全自动高速直线 PET 吹瓶机",
+      "description": "RIBO 专注研发与制造全自动高速直线 PET 吹瓶机，为饮料、日化及食品包装企业提供稳定、高效、节能的吹瓶解决方案。",
+      "keywords": "PET吹瓶机,直线吹瓶机,全自动吹瓶机,高速吹瓶机,PET瓶成型设备,饮料瓶吹瓶机,吹塑机,包装机械,拉伸吹塑,日博RIBO"
+    },
+    "hero": {
+      "eyebrow": "工业级吹瓶解决方案",
+      "title": "全自动高速直线 PET 吹瓶机",
+      "subtitle": "以稳定产能、精准成型与智能控制，助力包装产线持续提效降本。",
+      "primaryCta": "获取方案咨询",
+      "secondaryCta": "查看产品系列",
+      "scrollHint": "浏览产品系列"
+    },
+    "products": {
+      "eyebrow": "产品系列",
+      "title": "吹瓶机产品矩阵",
+      "description": "高速直线式 PET 吹瓶平台，兼顾产能、成型精度与运行效率，满足连续化生产需求。",
+      "viewAll": "查看全部产品"
+    },
+    "features": {
+      "eyebrow": "技术实力",
+      "title": "核心优势",
+      "items": {
+        "speed": {
+          "title": "高速稳定",
+          "description": "直线式结构设计，支持高节拍连续生产，保障产线稳定输出。"
+        },
+        "precision": {
+          "title": "成型精准",
+          "description": "多腔同步控制与优化加热曲线，瓶型一致性与壁厚控制更可靠。"
+        },
+        "energy": {
+          "title": "节能高效",
+          "description": "智能温控与伺服驱动协同，降低单位能耗，提升综合效率。"
+        },
+        "service": {
+          "title": "全球服务",
+          "description": "从安装调试到维保培训，提供全生命周期技术支持。"
+        }
+      }
+    }
+  },
+  "products": {
+    "meta": {
+      "title": "产品中心 | RIBO 全自动高速直线 PET 吹瓶机",
+      "description": "浏览 RIBO 全自动高速直线 PET 吹瓶机产品系列，了解不同产能规格与应用场景。",
+      "keywords": "PET吹瓶机产品,直线吹瓶机系列,吹瓶设备,全自动PET吹瓶机,高速直线吹瓶机,塑料瓶生产线,吹瓶机械厂家"
+    },
+    "title": "产品中心",
+    "description": "浏览全自动高速直线 PET 吹瓶机系列，查看技术参数、产品视频与客户案例。",
+    "featured": "推荐",
+    "viewDetail": "查看详情",
+    "specifications": "技术参数",
+    "video": "产品视频",
+    "requestQuote": "获取报价",
+    "relatedCases": "相关案例",
+    "caseStudies": "客户案例",
+    "caseStudiesDescription": "来自饮料、食品包装等行业的真实项目经验。"
+  },
+  "footer": {
+    "copyright": "© {year} RIBO. 保留所有权利。",
+    "address": "中国 · 制造与全球服务"
+  }
+}

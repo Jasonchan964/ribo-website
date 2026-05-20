@@ -1,0 +1,84 @@
+{
+  "common": {
+    "brand": "RIBO",
+    "logoAlt": "RIBO corporate logo",
+    "tagline": "Fully Automatic High-Speed Linear PET Blow Molding Machines",
+    "localeLabel": "Language",
+    "localeCn": "中文",
+    "localeEn": "English",
+    "ctaContact": "Contact Us",
+    "ctaLearnMore": "Learn More",
+    "getQuote": "Get A Quote"
+  },
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "technology": "Technology",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "home": {
+    "meta": {
+      "title": "RIBO | Fully Automatic High-Speed Linear PET Blow Molding",
+      "description": "RIBO designs and manufactures fully automatic high-speed linear PET blow molding machines for beverage, personal care, and food packaging production lines.",
+      "keywords": "PET blow molding machine,linear blow molder,automatic PET blowing machine,high-speed blow molding,PET bottle equipment,beverage bottle blower,stretch blow molding,packaging machinery,RIBO"
+    },
+    "hero": {
+      "eyebrow": "Industrial Blow Molding Solutions",
+      "title": "Fully Automatic High-Speed Linear PET Blow Molding Machines",
+      "subtitle": "Stable throughput, precise forming, and intelligent control to help your packaging line run faster and leaner.",
+      "primaryCta": "Request a Consultation",
+      "secondaryCta": "Explore Product Line",
+      "scrollHint": "Scroll to products"
+    },
+    "products": {
+      "eyebrow": "Product line",
+      "title": "Blow molding machine series",
+      "description": "High-speed linear PET platforms engineered for stable output, precise forming, and efficient operation.",
+      "viewAll": "View all products"
+    },
+    "features": {
+      "eyebrow": "Engineering",
+      "title": "Core Advantages",
+      "items": {
+        "speed": {
+          "title": "High-Speed Stability",
+          "description": "Linear architecture supports continuous high-cycle production with dependable uptime."
+        },
+        "precision": {
+          "title": "Precise Forming",
+          "description": "Multi-cavity synchronization and optimized heating profiles for consistent bottle quality."
+        },
+        "energy": {
+          "title": "Energy Efficient",
+          "description": "Smart thermal management and servo coordination reduce energy per bottle produced."
+        },
+        "service": {
+          "title": "Global Support",
+          "description": "Lifecycle services from installation and commissioning to maintenance and training."
+        }
+      }
+    }
+  },
+  "products": {
+    "meta": {
+      "title": "Products | RIBO PET Blow Molding Machines",
+      "description": "Explore RIBO fully automatic high-speed linear PET blow molding machine series for different throughput requirements.",
+      "keywords": "PET blow molding products,linear blow molder series,bottle blowing equipment,automatic PET machine,high-speed linear blower,plastic bottle production line,blow molding manufacturer"
+    },
+    "title": "Products",
+    "description": "Explore our fully automatic high-speed linear PET blow molding machines with specs, videos, and customer stories.",
+    "featured": "Featured",
+    "viewDetail": "View details",
+    "specifications": "Technical specifications",
+    "video": "Product video",
+    "requestQuote": "Request a quote",
+    "relatedCases": "Related case studies",
+    "caseStudies": "Case studies",
+    "caseStudiesDescription": "Real-world projects across beverage and food packaging industries."
+  },
+  "footer": {
+    "copyright": "© {year} RIBO. All rights reserved.",
+    "address": "Manufacturing in China · Global Service"
+  }
+}
