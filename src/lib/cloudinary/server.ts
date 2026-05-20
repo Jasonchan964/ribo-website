@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { getCloudinaryConfig } from "@/lib/cloudinary/config";
+import { getCloudinaryConfig } from "./config";
 
 let configured = false;
 

@@ -22,8 +22,17 @@ npm run dev
 
 - 中文（默认）：[http://localhost:3000/cn](http://localhost:3000/cn)
 - English：[http://localhost:3000/en](http://localhost:3000/en)
+- **内容管理后台（Payload CMS）**：[http://localhost:3000/admin](http://localhost:3000/admin)
 
 根路径 `/` 会自动重定向到默认语言 `/cn`。
+
+### 首次启用 CMS
+
+1. 在 `.env.local` 中配置 `PAYLOAD_SECRET`（随机长字符串）及 Cloudinary 变量（见下方 Environment）。
+2. 创建首个管理员：`npm run seed:cms`（默认账号见 `.env.example` 中的 `CMS_ADMIN_*`）。
+3. 打开 [http://localhost:3000/admin](http://localhost:3000/admin) 登录。
+4. 在 **媒体库** 上传产品图/视频（自动同步到 Cloudinary），再在 **吹瓶机产品** 中创建或编辑条目。
+5. CMS 中已有至少一条产品时，前台会自动读取 Payload 数据；否则继续使用内置 Mock 数据。
 
 ## Project Structure (SEO-oriented)
 
@@ -54,6 +63,9 @@ src/
 | `npm run build`| 生产构建         |
 | `npm run start`| 启动生产服务     |
 | `npm run lint` | ESLint 检查      |
+| `npm run seed:cms` | 创建首个 CMS 管理员 |
+| `npm run generate:importmap` | 更新 Payload Admin import map |
+| `npm run generate:types` | 生成 Payload TypeScript 类型 |
 
 ## Deploy on Vercel
 
@@ -77,10 +89,20 @@ src/
 | `CLOUDINARY_UPLOAD_FOLDER` | No | 根目录，默认 `ribo/products` |
 | `CLOUDINARY_IMAGE_FOLDER` | No | 产品图目录，默认 `ribo/products/images` |
 | `CLOUDINARY_VIDEO_FOLDER` | No | 机器视频目录，默认 `ribo/products/videos` |
+| `PAYLOAD_SECRET` | Yes (CMS) | Payload 会话与 API 签名密钥 |
+| `DATABASE_URL` | No | SQLite 路径，默认 `file:./ribo-cms.db` |
+| `CMS_ADMIN_EMAIL` | No | `npm run seed:cms` 使用的管理员邮箱 |
+| `CMS_ADMIN_PASSWORD` | No | `npm run seed:cms` 使用的初始密码 |
 
-\* 使用 `MediaUploader` 上传时需要。
+\* 使用 `MediaUploader` 或 Payload 媒体库上传时需要 Cloudinary 变量。
 
-### Cloudinary 上传组件
+### CMS 与 Cloudinary
+
+- 后台路由：**`/admin`**（Payload CMS，内置于本 Next.js 项目）
+- 媒体上传：在 Admin 的 **媒体库** 中上传，文件通过 Cloudinary 存储适配器直传你的 Cloudinary 账户（目录见 `CLOUDINARY_*_FOLDER`）。
+- 生产环境（Vercel）建议使用托管数据库（如 Neon Postgres + `@payloadcms/db-postgres`）；本地开发默认 SQLite 文件 `ribo-cms.db`。
+
+### Cloudinary 上传组件（可选，供自定义页面）
 
 ```tsx
 import { MediaUploader } from "@/components/cloudinary";

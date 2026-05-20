@@ -224,27 +224,34 @@ function spec(
 }
 
 // ---------------------------------------------------------------------------
-// Data access layer — 与 CMS SDK 保持相同 async 签名，便于后续替换
+// Data access layer — Payload CMS 优先，无内容时回退 Mock
 // ---------------------------------------------------------------------------
 
-const PRODUCT_DELAY_MS = 0;
-const CASE_DELAY_MS = 0;
+import { resolveCmsContent } from "@/lib/cms-source";
 
-async function simulateDelay(ms: number) {
-  if (ms > 0) await new Promise((r) => setTimeout(r, ms));
+const mockSnapshot = () => ({
+  products: [...products].sort(
+    (a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  ),
+  caseStudies: [...caseStudies].sort(
+    (a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  ),
+});
+
+async function getContent() {
+  return resolveCmsContent(mockSnapshot());
 }
 
 export async function getProducts(): Promise<Product[]> {
-  await simulateDelay(PRODUCT_DELAY_MS);
-  return [...products].sort(
-    (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+  const { products: cmsProducts } = await getContent();
+  return cmsProducts;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  await simulateDelay(PRODUCT_DELAY_MS);
-  return products.find((p) => p.slug === slug) ?? null;
+  const all = await getProducts();
+  return all.find((p) => p.slug === slug) ?? null;
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
@@ -258,18 +265,15 @@ export async function getProductSlugs(): Promise<string[]> {
 }
 
 export async function getCaseStudies(): Promise<CaseStudy[]> {
-  await simulateDelay(CASE_DELAY_MS);
-  return [...caseStudies].sort(
-    (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+  const { caseStudies: cmsCases } = await getContent();
+  return cmsCases;
 }
 
 export async function getCaseStudyBySlug(
   slug: string,
 ): Promise<CaseStudy | null> {
-  await simulateDelay(CASE_DELAY_MS);
-  return caseStudies.find((c) => c.slug === slug) ?? null;
+  const all = await getCaseStudies();
+  return all.find((c) => c.slug === slug) ?? null;
 }
 
 export async function getCaseStudiesForProduct(

@@ -23,6 +23,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const t = useTranslations("products");
   const isDisplay = variant === "display";
+  const imageSrc =
+    product.mainImage?.trim() ||
+    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&q=80";
 
   return (
     <article
@@ -39,7 +42,7 @@ export function ProductCard({
         className="relative block aspect-[4/3] overflow-hidden bg-muted"
       >
         <OptimizedImage
-          src={product.mainImage}
+          src={imageSrc}
           alt={localize(product.name, locale)}
           fill
           loading="lazy"

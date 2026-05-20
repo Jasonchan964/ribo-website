@@ -7,6 +7,18 @@ import type { CaseStudy, Product } from "@/lib/types";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&q=80";
+
+function isEmbeddableVideo(url: string): boolean {
+  return /youtube\.com|youtu\.be|\/embed\//i.test(url);
+}
+
+function productImageSrc(url: string | undefined): string {
+  const trimmed = url?.trim();
+  return trimmed || PLACEHOLDER_IMAGE;
+}
+
 export type ProductDetailProps = {
   product: Product;
   locale: Locale;
@@ -19,9 +31,10 @@ export function ProductDetail({
   relatedCaseStudies = [],
 }: ProductDetailProps) {
   const t = useTranslations("products");
-  const gallery = product.gallery?.length
-    ? product.gallery
-    : [product.mainImage];
+  const mainImage = productImageSrc(product.mainImage);
+  const gallery = product.gallery?.filter((src) => src?.trim()).length
+    ? product.gallery!.filter((src) => src?.trim())
+    : [mainImage];
 
   return (
     <div className="space-y-12">
@@ -29,7 +42,7 @@ export function ProductDetail({
         <div className="space-y-4">
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted">
             <OptimizedImage
-              src={product.mainImage}
+              src={mainImage}
               alt={localize(product.name, locale)}
               fill
               priority
@@ -86,13 +99,23 @@ export function ProductDetail({
             {t("video")}
           </h2>
           <div className="relative mt-6 aspect-video overflow-hidden rounded-xl border bg-muted">
-            <iframe
-              src={product.videoUrl}
-              title={localize(product.name, locale)}
-              className="absolute inset-0 size-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            {isEmbeddableVideo(product.videoUrl) ? (
+              <iframe
+                src={product.videoUrl}
+                title={localize(product.name, locale)}
+                className="absolute inset-0 size-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={product.videoUrl}
+                controls
+                playsInline
+                className="absolute inset-0 size-full object-cover"
+                title={localize(product.name, locale)}
+              />
+            )}
           </div>
         </section>
       ) : null}

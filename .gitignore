@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local uploads / test media (use Cloudinary in production)
+/media/
+
+# Payload CMS
+ribo-cms.db
+ribo-cms.db-*
+.payload
+src/payload/payload-types.ts

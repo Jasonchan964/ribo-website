@@ -5,6 +5,10 @@ import { ProductItemListJsonLd } from "@/components/seo/json-ld";
 import type { Locale } from "@/i18n/routing";
 import { getCaseStudies, getProducts } from "@/lib/data";
 import { createPageMetadata } from "@/lib/seo/metadata";
+
+/** CMS 更新后在一分钟内反映到前台（开发模式每次请求都会刷新） */
+export const revalidate = 60;
+
 type PageProps = {
   params: Promise<{ locale: Locale }>;
 };

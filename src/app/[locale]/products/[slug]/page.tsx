@@ -15,6 +15,12 @@ import {
 import { createProductMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/config/site";
 
+/** 允许 CMS 中新建、未在构建时预渲染的 slug 按需生成页面 */
+export const dynamicParams = true;
+
+/** 与产品列表一致：定时重新验证 CMS 数据 */
+export const revalidate = 60;
+
 type PageProps = {
   params: Promise<{ locale: Locale; slug: string }>;
 };
