@@ -1,4 +1,3 @@
-import { siteConfig } from "@/config/site";
 import {
   cloudinaryImageUrl,
   cloudinaryVideoUrl,
@@ -14,15 +13,6 @@ type MediaDoc = {
   cloudinaryPublicId?: string | null;
   filename?: string | null;
 };
-
-function siteOrigin(): string {
-  const url = process.env.NEXT_PUBLIC_SITE_URL ?? siteConfig.url;
-  try {
-    return new URL(url).origin;
-  } catch {
-    return siteConfig.url.replace(/\/$/, "");
-  }
-}
 
 function toLocalized(value: LocalizedPayload): LocalizedString {
   return {
@@ -51,8 +41,9 @@ function resolveMediaUrl(media: MediaDoc | string | number | null | undefined): 
     return isVideo ? cloudinaryVideoUrl(publicId) : cloudinaryImageUrl(publicId);
   }
 
+  /** 同站资源保持相对路径，避免 NEXT_PUBLIC_SITE_URL 指向正式域时在本地把图片拼成外站 URL 导致 next/image 报错 */
   if (rawUrl.startsWith("/")) {
-    return `${siteOrigin()}${rawUrl}`;
+    return rawUrl;
   }
 
   return rawUrl;
