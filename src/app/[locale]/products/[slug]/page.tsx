@@ -53,18 +53,20 @@ export default async function ProductDetailPage({ params }: PageProps) {
   ];
 
   return (
-    <article className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <>
       <ProductJsonLd
         product={product}
         locale={locale}
         caseStudies={relatedCaseStudies}
       />
       <BreadcrumbJsonLd locale={locale} items={breadcrumbItems} />
-      <ProductDetail
-        product={product}
-        locale={locale}
-        relatedCaseStudies={relatedCaseStudies}
-      />
-    </article>
+      <article className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <ProductDetail
+          product={product}
+          locale={locale}
+          relatedCaseStudies={relatedCaseStudies}
+        />
+      </article>
+    </>
   );
 }

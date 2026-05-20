@@ -4,7 +4,11 @@ import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n/routing";
 import { localize } from "@/lib/localize";
 import type { Product } from "@/lib/types";
-import { buildProductKeywords } from "@/lib/seo/keywords";
+import {
+  buildProductKeywords,
+  getIndustryKeywords,
+  keywordsToMetaString,
+} from "@/lib/seo/keywords";
 
 type PageMetaNamespace = "home" | "products";
 
@@ -25,6 +29,18 @@ function buildAlternates(locale: Locale, path: string) {
     ]),
   );
   return { canonical, languages };
+}
+
+function mergePageKeywords(locale: Locale, pageKeywords: string): string {
+  const fromTranslations = pageKeywords
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  return keywordsToMetaString([
+    ...getIndustryKeywords(locale),
+    ...fromTranslations,
+  ]);
 }
 
 const baseRobots: Metadata["robots"] = {
@@ -49,7 +65,7 @@ export async function createPageMetadata({
 }): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace: `${page}.meta` });
   const { canonical, languages } = buildAlternates(locale, path);
-  const keywords = t("keywords");
+  const keywords = mergePageKeywords(locale, t("keywords"));
 
   return {
     metadataBase: new URL(siteConfig.url),
@@ -128,6 +144,12 @@ export function createSiteMetadata(): Metadata {
   return {
     metadataBase: new URL(siteConfig.url),
     applicationName: siteConfig.name,
+    title: {
+      default: siteConfig.name,
+      template: `%s | ${siteConfig.name}`,
+    },
+    description: siteConfig.description,
+    keywords: keywordsToMetaString(getIndustryKeywords(siteConfig.defaultLocale)),
     robots: baseRobots,
     formatDetection: {
       telephone: false,

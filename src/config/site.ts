@@ -1,5 +1,7 @@
 export const siteConfig = {
   name: "日博RIBO",
+  description:
+    "全自动高速直线 PET 吹瓶机研发与制造 · Fully automatic high-speed linear PET blow molding machines",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ribo.com",
   locales: ["cn", "en"] as const,
   defaultLocale: "cn" as const,

@@ -55,6 +55,33 @@ export function WebSiteJsonLd({ locale }: { locale: Locale }) {
   );
 }
 
+export function ProductItemListJsonLd({
+  products,
+  locale,
+}: {
+  products: Product[];
+  locale: Locale;
+}) {
+  return (
+    <JsonLdScript
+      data={{
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name:
+          locale === "cn"
+            ? "RIBO PET 吹瓶机产品系列"
+            : "RIBO PET Blow Molding Machine Series",
+        itemListElement: products.map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: localize(product.name, locale),
+          url: `${siteConfig.url}/${locale}/products/${product.slug}`,
+        })),
+      }}
+    />
+  );
+}
+
 export function BreadcrumbJsonLd({
   locale,
   items,
@@ -130,6 +157,12 @@ export function ProductJsonLd({
       name: localize(study.clientName, locale),
     },
     reviewBody: localize(study.projectDescription, locale),
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: 5,
+      bestRating: 5,
+      worstRating: 1,
+    },
     datePublished: study.publishedAt,
   }));
 
@@ -150,7 +183,13 @@ export function ProductJsonLd({
           "@type": "Brand",
           name: siteConfig.name,
         },
+        manufacturer: {
+          "@type": "Organization",
+          name: siteConfig.name,
+          url: siteConfig.url,
+        },
         category: locale === "cn" ? "PET吹瓶机" : "PET Blow Molding Machine",
+        mainEntityOfPage: url,
         ...(aggregateRating ? { aggregateRating } : {}),
         ...(reviews.length > 0 ? { review: reviews } : {}),
         additionalProperty: product.specifications.map((spec) => ({

@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductCard } from "@/components/products/product-card";
 import { CaseStudyCard } from "@/components/case-studies/case-study-card";
+import { ProductItemListJsonLd } from "@/components/seo/json-ld";
 import type { Locale } from "@/i18n/routing";
 import { getCaseStudies, getProducts } from "@/lib/data";
 import { createPageMetadata } from "@/lib/seo/metadata";
@@ -25,6 +26,7 @@ export default async function ProductsPage({ params }: PageProps) {
 
   return (
     <>
+      <ProductItemListJsonLd products={products} locale={locale} />
       <section
         className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"
         aria-labelledby="products-page-title"

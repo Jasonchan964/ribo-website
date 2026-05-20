@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { siteConfig } from "@/config/site";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
@@ -13,6 +14,15 @@ export function HeroSection() {
 
   return (
     <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden">
+      <OptimizedImage
+        src={siteConfig.hero.posterSrc}
+        alt=""
+        fill
+        priority
+        className="object-cover"
+        sizes="100vw"
+        aria-hidden
+      />
       <video
         className="absolute inset-0 size-full object-cover"
         autoPlay

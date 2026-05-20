@@ -58,7 +58,7 @@ export function ProductDetail({
           ) : null}
         </div>
 
-        <div>
+        <header>
           <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             {localize(product.name, locale)}
           </h1>
@@ -74,7 +74,7 @@ export function ProductDetail({
           >
             {t("requestQuote")}
           </Link>
-        </div>
+        </header>
       </section>
 
       {product.videoUrl ? (
