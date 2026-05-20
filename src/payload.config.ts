@@ -1,3 +1,4 @@
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { postgresAdapter } from "@payloadcms/db-postgres";
@@ -24,8 +25,19 @@ const isPostgresUrl =
   databaseUrl.startsWith("postgresql://");
 
 /**
- * Vercel 等无服务器环境无法持久化 SQLite 文件，必须用托管 Postgres（如 Neon）。
- * push：首迁/开发时根据 schema 同步表结构；生产稳定后可关 PAYLOAD_DISABLE_PUSH 并改用 migrate。
+ * Vercel 无法在仓库内持久化 SQLite；未配置 Postgres 时用临时目录中的文件，
+ * 仅用于让 Payload 完成初始化（查询常因无表失败 → 前台由 cms-source 回退 Mock）。
+ * 正式 CMS 数据请配置 Neon 等的 DATABASE_URL（postgres://…）。
+ */
+function vercelFallbackSqliteUrl(): string {
+  const file = path.join(tmpdir(), "payload-cms-vercel.sqlite");
+  const normalized = file.replace(/\\/g, "/");
+  return normalized.startsWith("/") ? `file:${normalized}` : `file:/${normalized}`;
+}
+
+/**
+ * push：Postgres 下仍仅在非 production 执行 push（见 Payload）；生产建表请用 migrate 或 Neon 控制台执行 SQL。
+ * PAYLOAD_DISABLE_PUSH=true 可关闭 postgresAdapter 的 push 选项（与开发态 push 不同，见文档）。
  */
 function database() {
   if (isPostgresUrl) {
@@ -38,9 +50,11 @@ function database() {
   }
 
   if (process.env.VERCEL === "1") {
-    throw new Error(
-      '[payload] On Vercel you must set DATABASE_URL to a PostgreSQL connection string (e.g. from neon.tech). SQLite file databases are not supported on serverless; see README "Deploy on Vercel".',
-    );
+    return sqliteAdapter({
+      client: {
+        url: vercelFallbackSqliteUrl(),
+      },
+    });
   }
 
   return sqliteAdapter({

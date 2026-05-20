@@ -72,7 +72,7 @@ src/
 1. 将仓库导入 [Vercel](https://vercel.com)，Framework Preset 选 **Next.js**（与根目录 `vercel.json` 一致）。
 2. **Node.js 版本**：项目 `.nvmrc` 为 `20`，与 `package.json` 中 `engines.node` 一致。
 3. 在 **Settings → Environment Variables** 填入下方变量（Production / Preview 建议都配置）。
-4. **数据库（必须）**：Vercel 无法使用本地 SQLite 文件。请在 [Neon](https://neon.tech)、Supabase、或任意 Postgres 托管服务创建数据库，将 **`DATABASE_URL`** 设为以 `postgresql://` 或 `postgres://` 开头的连接串。首次部署后 Payload 会根据 schema **自动建表**（`push`）；若需冻结 schema，可设置 `PAYLOAD_DISABLE_PUSH=true` 并改用官方 migrate 流程。
+4. **数据库**：正式环境请在 Neon 等创建 **Postgres**，设置 **`DATABASE_URL`** 为 `postgresql://…`。若暂未配置，部署仍可完成，前台会回退内置 Mock；**`/admin` 无持久库时请尽快接入 Postgres。**
 5. 部署后确认：`/cn`、`/en`、`/sitemap.xml`、`/robots.txt` 可访问；上传功能需 Cloudinary 变量齐全；在 `/admin` 重新创建管理员或从本地导出/迁移数据（生产库与本地 `ribo-cms.db` 相互独立）。
 
 构建命令：`npm run build`（默认，无需修改）。
