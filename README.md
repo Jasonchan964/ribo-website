@@ -72,7 +72,8 @@ src/
 1. 将仓库导入 [Vercel](https://vercel.com)，Framework Preset 选 **Next.js**（与根目录 `vercel.json` 一致）。
 2. **Node.js 版本**：项目 `.nvmrc` 为 `20`，与 `package.json` 中 `engines.node` 一致。
 3. 在 **Settings → Environment Variables** 填入下方变量（Production / Preview 建议都配置）。
-4. 部署后确认：`/cn`、`/en`、`/sitemap.xml`、`/robots.txt` 可访问；上传功能需 Cloudinary 变量齐全。
+4. **数据库（必须）**：Vercel 无法使用本地 SQLite 文件。请在 [Neon](https://neon.tech)、Supabase、或任意 Postgres 托管服务创建数据库，将 **`DATABASE_URL`** 设为以 `postgresql://` 或 `postgres://` 开头的连接串。首次部署后 Payload 会根据 schema **自动建表**（`push`）；若需冻结 schema，可设置 `PAYLOAD_DISABLE_PUSH=true` 并改用官方 migrate 流程。
+5. 部署后确认：`/cn`、`/en`、`/sitemap.xml`、`/robots.txt` 可访问；上传功能需 Cloudinary 变量齐全；在 `/admin` 重新创建管理员或从本地导出/迁移数据（生产库与本地 `ribo-cms.db` 相互独立）。
 
 构建命令：`npm run build`（默认，无需修改）。
 
@@ -90,7 +91,8 @@ src/
 | `CLOUDINARY_IMAGE_FOLDER` | No | 产品图目录，默认 `ribo/products/images` |
 | `CLOUDINARY_VIDEO_FOLDER` | No | 机器视频目录，默认 `ribo/products/videos` |
 | `PAYLOAD_SECRET` | Yes (CMS) | Payload 会话与 API 签名密钥 |
-| `DATABASE_URL` | No | SQLite 路径，默认 `file:./ribo-cms.db` |
+| `DATABASE_URL` | **Yes on Vercel** | 生产：`postgresql://…`（Neon 等）。本地：可省略，默认 `file:./ribo-cms.db`（SQLite） |
+| `PAYLOAD_DISABLE_PUSH` | No | 设为 `true` 则关闭自动建表（高级：改用 migrate） |
 | `CMS_ADMIN_EMAIL` | No | `npm run seed:cms` 使用的管理员邮箱 |
 | `CMS_ADMIN_PASSWORD` | No | `npm run seed:cms` 使用的初始密码 |
 
@@ -100,7 +102,7 @@ src/
 
 - 后台路由：**`/admin`**（Payload CMS，内置于本 Next.js 项目）
 - 媒体上传：在 Admin 的 **媒体库** 中上传，文件通过 Cloudinary 存储适配器直传你的 Cloudinary 账户（目录见 `CLOUDINARY_*_FOLDER`）。
-- 生产环境（Vercel）建议使用托管数据库（如 Neon Postgres + `@payloadcms/db-postgres`）；本地开发默认 SQLite 文件 `ribo-cms.db`。
+- **Vercel 上** 必须在环境变量中配置 **Postgres** 的 `DATABASE_URL`（见上表）；本地仍可用默认 SQLite `ribo-cms.db`。
 
 ### Cloudinary 上传组件（可选，供自定义页面）
 
