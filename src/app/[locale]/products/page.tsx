@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ProductCard } from "@/components/products/product-card";
 import { CaseStudyCard } from "@/components/case-studies/case-study-card";

@@ -8,13 +8,15 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:lan": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
+    "start:lan": "next start --hostname 0.0.0.0",
     "lint": "eslint",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
-    "seed:cms": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-cms.ts"
+    "seed:cms": "cross-env NODE_OPTIONS=--no-deprecation payload run scripts/seed-cms.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

@@ -43,19 +43,19 @@
       "items": {
         "speed": {
           "title": "High-Speed Stability",
-          "description": "Linear architecture supports continuous high-cycle production with dependable uptime."
+          "description": "Theoretical peak output up to 3,000 bottles per hour—top-tier performance among linear blow molding machines."
         },
         "precision": {
           "title": "Precise Forming",
-          "description": "Multi-cavity synchronization and optimized heating profiles for consistent bottle quality."
+          "description": "China's first in-house full closed-loop constant-temperature control system—preform heating unaffected by voltage fluctuations, with 40% higher molding stability and precision."
         },
         "energy": {
           "title": "Energy Efficient",
-          "description": "Smart thermal management and servo coordination reduce energy per bottle produced."
+          "description": "Smart thermal control with six-motor servo coordination delivers high output while lowering energy per bottle."
         },
         "service": {
           "title": "Global Support",
-          "description": "Lifecycle services from installation and commissioning to maintenance and training."
+          "description": "From on-site installation and maintenance training to remote troubleshooting on live machines—we deliver comprehensive after-sales service to customers worldwide."
         }
       }
     }

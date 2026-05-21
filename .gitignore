@@ -48,3 +48,5 @@ ribo-cms.db
 ribo-cms.db-*
 .payload
 src/payload/payload-types.ts
+
+.vercel

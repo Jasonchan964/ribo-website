@@ -17,7 +17,17 @@ function siteHostnameFromEnv(): string | null {
 
 const siteHost = siteHostnameFromEnv();
 
+/** 局域网 IP 访问 dev 时加载 JS（Next 16 默认会拦截跨源 /_next 请求） */
+function allowedDevOriginsFromEnv(): string[] {
+  const raw = process.env.ALLOWED_DEV_ORIGINS?.trim();
+  if (raw) {
+    return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  return ["192.168.*", "10.*", "172.16.*", "172.17.*", "172.18.*"];
+}
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: allowedDevOriginsFromEnv(),
   images: {
     remotePatterns: [
       {

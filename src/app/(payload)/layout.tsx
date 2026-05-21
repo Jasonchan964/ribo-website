@@ -8,6 +8,9 @@ import React from "react";
 import { importMap } from "./admin/importMap.js";
 import "./custom.scss";
 
+/** Vercel 冷启动 + Payload 较重，延长函数上限（具体上限取决于套餐） */
+export const maxDuration = 60;
+
 type Args = {
   children: React.ReactNode;
 };
