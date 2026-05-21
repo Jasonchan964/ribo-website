@@ -55,3 +55,54 @@ export async function resolveCmsContent(
   const fromPayload = await loadFromPayload();
   return fromPayload ?? mock;
 }
+
+/**
+ * 按 URL slug 从 Payload 查询单个产品（与 locale 无关：多语言在 name.cn / name.en 字段组内）。
+ */
+export async function getProductFromPayloadBySlug(
+  slug: string,
+): Promise<Product | null> {
+  if (!isPayloadConfigured() || !slug) return null;
+
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug).trim();
+  } catch {
+    decoded = slug.trim();
+  }
+
+  const candidates = [...new Set([decoded, decoded.toLowerCase()])].filter(
+    Boolean,
+  );
+
+  noStore();
+
+  try {
+    const payload = await getPayloadClient();
+
+    for (const candidate of candidates) {
+      const result = await payload.find({
+        collection: "products",
+        where: {
+          slug: {
+            equals: candidate,
+          },
+        },
+        limit: 1,
+        depth: 2,
+        overrideAccess: true,
+      });
+
+      const doc = result.docs[0];
+      if (!doc) continue;
+
+      const mapped = mapPayloadProduct(doc);
+      if (mapped) return mapped;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn("[cms] getProductFromPayloadBySlug failed:", error);
+    return null;
+  }
+}

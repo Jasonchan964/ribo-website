@@ -84,7 +84,10 @@ export function mapPayloadProduct(doc: Record<string, any>): Product | null {
     mainImage,
     gallery,
     videoUrl: resolveVideoUrl(doc.video, doc.videoUrl),
-    specifications: (doc.specifications ?? []).map(
+    specifications: (Array.isArray(doc.specifications)
+      ? doc.specifications
+      : []
+    ).map(
       (spec: {
         label: LocalizedPayload;
         value: LocalizedPayload;
@@ -100,7 +103,7 @@ export function mapPayloadProduct(doc: Record<string, any>): Product | null {
     metaKeywords: doc.metaKeywords?.cn || doc.metaKeywords?.en
       ? toLocalized(doc.metaKeywords)
       : undefined,
-    reviews: (doc.reviews ?? []).map(
+    reviews: (Array.isArray(doc.reviews) ? doc.reviews : []).map(
       (review: {
         author: LocalizedPayload;
         reviewBody: LocalizedPayload;

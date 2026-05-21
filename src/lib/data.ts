@@ -227,7 +227,19 @@ function spec(
 // Data access layer — Payload CMS 优先，无内容时回退 Mock
 // ---------------------------------------------------------------------------
 
-import { resolveCmsContent } from "@/lib/cms-source";
+import {
+  getProductFromPayloadBySlug,
+  resolveCmsContent,
+} from "@/lib/cms-source";
+
+/** 规范化路由中的 slug（解码、去空格、小写） */
+export function normalizeProductSlug(slug: string): string {
+  try {
+    return decodeURIComponent(slug).trim().toLowerCase();
+  } catch {
+    return slug.trim().toLowerCase();
+  }
+}
 
 const mockSnapshot = () => ({
   products: [...products].sort(
@@ -250,8 +262,16 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const normalized = normalizeProductSlug(slug);
+  if (!normalized) return null;
+
+  const fromPayload = await getProductFromPayloadBySlug(normalized);
+  if (fromPayload) return fromPayload;
+
   const all = await getProducts();
-  return all.find((p) => p.slug === slug) ?? null;
+  return (
+    all.find((p) => normalizeProductSlug(p.slug) === normalized) ?? null
+  );
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {

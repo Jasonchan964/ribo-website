@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { cloudinaryClientUploadBeforeChange } from "../hooks/cloudinary-client-upload";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -17,6 +18,9 @@ export const Media: CollectionConfig = {
   upload: {
     mimeTypes: ["image/*", "video/*"],
     bulkUpload: true,
+  },
+  hooks: {
+    beforeChange: [cloudinaryClientUploadBeforeChange],
   },
   fields: [
     {

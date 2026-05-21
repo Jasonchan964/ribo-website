@@ -130,7 +130,7 @@ export function ProductDetail({
         <div className="mt-6 overflow-hidden rounded-xl border">
           <table className="w-full text-sm">
             <tbody>
-              {product.specifications.map((spec, index) => (
+              {(product.specifications ?? []).map((spec, index) => (
                 <tr
                   key={`${localize(spec.label, locale)}-${index}`}
                   className="border-b last:border-b-0 odd:bg-muted/30"

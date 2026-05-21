@@ -5,6 +5,10 @@ import {
   isCloudinaryConfigured,
   resolveUploadFolder,
 } from "../lib/cloudinary/config";
+import {
+  isCloudinaryClientUploadContext,
+  resourceTypeFromMime,
+} from "../lib/cloudinary/client-upload-context";
 import { getCloudinaryServer } from "../lib/cloudinary/server";
 
 function uploadBuffer(
@@ -29,14 +33,31 @@ function uploadBuffer(
   });
 }
 
-function resourceTypeFromMime(mimeType: string): "image" | "video" {
-  return mimeType.startsWith("video/") ? "video" : "image";
-}
-
 export const cloudinaryAdapter: Adapter = () => ({
   name: "cloudinary",
 
-  async handleUpload({ file }) {
+  /**
+   * When true, Payload Admin uploads via CloudinaryClientUploadHandler (browser → Cloudinary).
+   * Server-side handleUpload remains for small legacy/multipart uploads.
+   */
+  clientUploads: {
+    access: ({ req }) => Boolean(req.user),
+  },
+
+  async handleUpload({ file, clientUploadContext }) {
+    if (isCloudinaryClientUploadContext(clientUploadContext)) {
+      const ctx = clientUploadContext;
+      return {
+        filename: ctx.publicId,
+        url: ctx.secureUrl,
+        mimeType: ctx.mimeType,
+        filesize: ctx.bytes,
+        width: ctx.width,
+        height: ctx.height,
+        cloudinaryPublicId: ctx.publicId,
+      };
+    }
+
     const resourceType = resourceTypeFromMime(file.mimeType);
     const folder = resolveUploadFolder(resourceType);
     const result = await uploadBuffer(file.buffer, { folder, resourceType });
@@ -85,7 +106,34 @@ export const cloudinaryAdapter: Adapter = () => ({
     return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${publicId}`;
   },
 
-  staticHandler(_req, { doc }) {
+  staticHandler(_req, { doc, params }) {
+    const clientContext = isCloudinaryClientUploadContext(
+      params?.clientUploadContext,
+    )
+      ? params.clientUploadContext
+      : null;
+
+    if (clientContext) {
+      const isVideo =
+        clientContext.resourceType === "video" ||
+        clientContext.mimeType.startsWith("video/");
+
+      // Avoid pulling multi‑MB video through Vercel when registering the media doc.
+      if (isVideo) {
+        return new Response(Buffer.alloc(0), {
+          status: 200,
+          headers: {
+            "Content-Type": clientContext.mimeType,
+            "Content-Length": "0",
+          },
+        });
+      }
+
+      if (clientContext.secureUrl) {
+        return Response.redirect(clientContext.secureUrl, 302);
+      }
+    }
+
     const fileDoc = doc as { url?: string | null } | undefined;
     const url = typeof fileDoc?.url === "string" ? fileDoc.url : "";
 

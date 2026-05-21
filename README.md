@@ -101,7 +101,7 @@ src/
 ### CMS 与 Cloudinary
 
 - 后台路由：**`/admin`**（Payload CMS，内置于本 Next.js 项目）
-- 媒体上传：在 Admin 的 **媒体库** 中上传，文件通过 Cloudinary 存储适配器直传你的 Cloudinary 账户（目录见 `CLOUDINARY_*_FOLDER`）。
+- 媒体上传：Admin **媒体库** 在已登录时使用 **浏览器直传 Cloudinary**（`clientUploads`），大视频不会经过 Vercel 的 ~4.5MB 请求体限制；超过约 20MB 时自动分片上传。直传目录见 `CLOUDINARY_*_FOLDER`。
 - **Vercel 上** 必须在环境变量中配置 **Postgres** 的 `DATABASE_URL`（见上表）；本地仍可用默认 SQLite `ribo-cms.db`。
 
 ### Cloudinary 上传组件（可选，供自定义页面）

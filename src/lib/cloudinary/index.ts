@@ -1,4 +1,13 @@
 export {
+  isCloudinaryClientUploadContext,
+  resourceTypeFromMime,
+  type CloudinaryClientUploadContext,
+} from "./client-upload-context";
+export {
+  applyCloudinaryClientUploadToData,
+  getCloudinaryClientUploadContext,
+} from "./client-upload-doc";
+export {
   getCloudinaryConfig,
   getCloudinaryPublicConfig,
   isCloudinaryConfigured,

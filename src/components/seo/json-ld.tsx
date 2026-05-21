@@ -192,7 +192,7 @@ export function ProductJsonLd({
         mainEntityOfPage: url,
         ...(aggregateRating ? { aggregateRating } : {}),
         ...(reviews.length > 0 ? { review: reviews } : {}),
-        additionalProperty: product.specifications.map((spec) => ({
+        additionalProperty: (product.specifications ?? []).map((spec) => ({
           "@type": "PropertyValue",
           name: localize(spec.label, locale),
           value: formatSpecValue(spec, locale),
