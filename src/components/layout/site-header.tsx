@@ -14,7 +14,7 @@ const navItems = [
   { href: "/#products", key: "products" },
   { href: "/#technology", key: "technology" },
   { href: "/#about", key: "about" },
-  { href: "/#contact", key: "contact" },
+  { href: "/contact", key: "contact" },
 ] as const;
 
 export function SiteHeader() {
@@ -92,7 +92,7 @@ export function SiteHeader() {
           <div className="flex items-center gap-2 sm:gap-3">
             <LocaleSwitcher variant={overlay ? "dark" : "light"} />
             <Link
-              href="/#contact"
+              href="/contact"
               className={cn(
                 buttonVariants({ size: "sm" }),
                 "hidden rounded-sm sm:inline-flex",
@@ -154,7 +154,7 @@ export function SiteHeader() {
               ))}
             </ul>
             <Link
-              href="/#contact"
+              href="/contact"
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "mt-8 rounded-sm bg-accent text-accent-foreground hover:bg-accent/90",

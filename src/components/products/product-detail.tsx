@@ -79,7 +79,7 @@ export function ProductDetail({
             {localize(product.description, locale)}
           </p>
           <Link
-            href="/#contact"
+            href="/contact"
             className={cn(
               buttonVariants({ size: "lg" }),
               "mt-8 bg-accent text-accent-foreground hover:bg-accent/90",

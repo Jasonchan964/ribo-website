@@ -10,7 +10,7 @@ import {
   keywordsToMetaString,
 } from "@/lib/seo/keywords";
 
-type PageMetaNamespace = "home" | "products";
+type PageMetaNamespace = "home" | "products" | "contact";
 
 function localeToHreflang(locale: Locale): string {
   return locale === "cn" ? "zh-CN" : "en";

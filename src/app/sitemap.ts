@@ -9,7 +9,7 @@ function localeToHreflang(locale: (typeof routing.locales)[number]): string {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const productSlugs = await getProductSlugs();
-  const staticRoutes = ["", "/products"] as const;
+  const staticRoutes = ["", "/products", "/contact"] as const;
   const productRoutes = productSlugs.map((slug) => `/products/${slug}` as const);
   const routes = [...staticRoutes, ...productRoutes];
 

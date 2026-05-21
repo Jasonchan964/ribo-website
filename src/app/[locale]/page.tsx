@@ -96,7 +96,7 @@ export default async function HomePage({ params }: PageProps) {
           </h2>
           <p className="mt-4 text-primary-foreground/75">{t("hero.subtitle")}</p>
           <Link
-            href="/#contact"
+            href="/contact"
             className={cn(
               buttonVariants({ size: "lg" }),
               "mt-10 rounded-sm bg-accent px-12 text-accent-foreground hover:bg-accent/90",

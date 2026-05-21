@@ -77,6 +77,22 @@
     "caseStudies": "Case studies",
     "caseStudiesDescription": "Real-world projects across beverage and food packaging industries."
   },
+  "contact": {
+    "meta": {
+      "title": "Contact Us | RIBO",
+      "description": "Get a quote or reach our sales team for PET blow molding machine pricing and inquiries.",
+      "keywords": "RIBO contact,get a quote,PET blow molding inquiry,sales contact,blow molding machine pricing"
+    },
+    "title": "Contact Us",
+    "subtitle": "Get a Quote",
+    "nameLabel": "Sales",
+    "name": "Kayson Chen",
+    "role": "Sales Manager",
+    "emailLabel": "Email",
+    "whatsappLabel": "WhatsApp",
+    "wechatLabel": "WeChat",
+    "footerNote": "For pricing and inquiries, please use the contact details above. We will respond promptly."
+  },
   "footer": {
     "copyright": "© {year} RIBO. All rights reserved.",
     "address": "Manufacturing in China · Global Service"

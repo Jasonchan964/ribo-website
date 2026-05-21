@@ -57,7 +57,7 @@ export function HeroSection() {
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Link
-            href="/#contact"
+            href="/contact"
             className={cn(
               buttonVariants({ size: "lg" }),
               "h-14 min-w-[200px] rounded-sm bg-accent px-10 text-base font-semibold tracking-wide text-accent-foreground shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:shadow-xl hover:shadow-accent/30",

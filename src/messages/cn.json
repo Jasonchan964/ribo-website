@@ -77,6 +77,22 @@
     "caseStudies": "客户案例",
     "caseStudiesDescription": "来自饮料、食品包装等行业的真实项目经验。"
   },
+  "contact": {
+    "meta": {
+      "title": "联系我们 | RIBO",
+      "description": "获取全自动高速直线 PET 吹瓶机报价，或联系销售团队咨询价格与方案。",
+      "keywords": "日博RIBO联系,获取报价,PET吹瓶机咨询,销售联系,吹瓶机价格"
+    },
+    "title": "联系我们",
+    "subtitle": "获取报价",
+    "nameLabel": "销售",
+    "name": "陈麒森",
+    "role": "销售经理",
+    "emailLabel": "邮箱",
+    "whatsappLabel": "WhatsApp",
+    "wechatLabel": "微信",
+    "footerNote": "关于价格和咨询，请通过上述联系方式与我们联系，我们将尽快回复。"
+  },
   "footer": {
     "copyright": "© {year} RIBO. 保留所有权利。",
     "address": "中国 · 制造与全球服务"
