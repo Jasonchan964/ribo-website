@@ -50,14 +50,16 @@ function buildPostgresPoolConfig(): PoolConfig {
 }
 
 /**
- * push：Postgres 下仍仅在非 production 执行 push（见 Payload）；生产建表请用 migrate 或 Neon 控制台执行 SQL。
- * PAYLOAD_DISABLE_PUSH=true 可关闭 postgresAdapter 的 push 选项（与开发态 push 不同，见文档）。
+ * push: true — 开启 Drizzle 开发态 schema 自动同步（Payload 在 NODE_ENV=production 运行时不会 push）。
+ * 线上 Neon：由 Vercel 构建脚本 scripts/sync-db-schema.ts 在 deploy 前执行一次 push，无需本地 db:push / migrate。
+ * PAYLOAD_DISABLE_PUSH=true 可关闭 push（高级）。
  */
 function database() {
   if (isPostgresUrl) {
     return postgresAdapter({
       pool: buildPostgresPoolConfig(),
-      push: process.env.PAYLOAD_DISABLE_PUSH !== "true",
+      push:
+        process.env.PAYLOAD_DISABLE_PUSH === "true" ? false : true,
     });
   }
 
