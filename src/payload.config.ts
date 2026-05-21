@@ -1,6 +1,7 @@
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { PoolConfig } from "pg";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
@@ -36,15 +37,26 @@ function vercelFallbackSqliteUrl(): string {
 }
 
 /**
+ * Neon + Vercel Serverless：pg Pool 选项会传给每个底层 Client（连接超时、SSL、池大小）。
+ * @see https://node-postgres.com/apis/pool
+ */
+function buildPostgresPoolConfig(): PoolConfig {
+  return {
+    connectionString: databaseUrl,
+    max: 10,
+    connectionTimeoutMillis: 10_000,
+    ssl: { rejectUnauthorized: false },
+  };
+}
+
+/**
  * push：Postgres 下仍仅在非 production 执行 push（见 Payload）；生产建表请用 migrate 或 Neon 控制台执行 SQL。
  * PAYLOAD_DISABLE_PUSH=true 可关闭 postgresAdapter 的 push 选项（与开发态 push 不同，见文档）。
  */
 function database() {
   if (isPostgresUrl) {
     return postgresAdapter({
-      pool: {
-        connectionString: databaseUrl,
-      },
+      pool: buildPostgresPoolConfig(),
       push: process.env.PAYLOAD_DISABLE_PUSH !== "true",
     });
   }
