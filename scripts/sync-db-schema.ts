@@ -1,6 +1,6 @@
 /**
  * Vercel 构建阶段将 Payload schema 同步到 Neon。
- * Payload 在 NODE_ENV=production 运行时不会 push，因此在 CI 中以 development 连接一次。
+ * 需由 npm build 以 NODE_ENV=development 调用本脚本（见 package.json），Payload 才会执行 Drizzle push。
  */
 const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
 const isPostgresUrl =
@@ -11,10 +11,6 @@ if (process.env.VERCEL !== "1" || !isPostgresUrl) {
   console.log("[db] skip schema sync (local build or non-Postgres DATABASE_URL)");
   process.exit(0);
 }
-
-process.env.NODE_ENV = "development";
-process.env.PAYLOAD_FORCE_DRIZZLE_PUSH = "true";
-process.env.CI = "1";
 
 import { getPayload } from "payload";
 import config from "../src/payload.config";

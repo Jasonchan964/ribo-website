@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:lan": "next dev --hostname 0.0.0.0",
-    "build": "tsx scripts/sync-db-schema.ts && next build",
+    "build": "cross-env NODE_ENV=development PAYLOAD_FORCE_DRIZZLE_PUSH=true CI=1 tsx scripts/sync-db-schema.ts && cross-env NODE_ENV=production next build",
     "start": "next start",
     "start:lan": "next start --hostname 0.0.0.0",
     "lint": "eslint",
