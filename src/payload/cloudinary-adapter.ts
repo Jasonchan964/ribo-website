@@ -1,9 +1,7 @@
 import type { Adapter } from "@payloadcms/plugin-cloud-storage/types";
 import { APIError } from "payload";
-import {
-  getCloudinaryConfig,
-  isCloudinaryConfigured,
-} from "../lib/cloudinary/config";
+import { resolveCloudinaryMediaUrl } from "../lib/cloudinary/delivery";
+import { isCloudinaryConfigured } from "../lib/cloudinary/config";
 import {
   isCloudinaryClientUploadContext,
 } from "../lib/cloudinary/client-upload-context";
@@ -69,18 +67,17 @@ export const cloudinaryAdapter: Adapter = () => ({
   },
 
   generateURL({ data }) {
-    if (typeof data?.url === "string") return data.url;
-    const publicId =
-      typeof data?.cloudinaryPublicId === "string"
-        ? data.cloudinaryPublicId
-        : data?.filename;
-    if (!publicId) return "";
-
-    const { cloudName } = getCloudinaryConfig();
-    const resourceType = String(data?.mimeType ?? "").startsWith("video/")
-      ? "video"
-      : "image";
-    return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${publicId}`;
+    if (!data) return "";
+    const url = resolveCloudinaryMediaUrl({
+      url: typeof data.url === "string" ? data.url : null,
+      mimeType: typeof data.mimeType === "string" ? data.mimeType : null,
+      cloudinaryPublicId:
+        typeof data.cloudinaryPublicId === "string"
+          ? data.cloudinaryPublicId
+          : null,
+      filename: typeof data.filename === "string" ? data.filename : null,
+    });
+    return url ?? "";
   },
 
   staticHandler(_req, { doc, params }) {

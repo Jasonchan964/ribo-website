@@ -3,6 +3,12 @@ import {
   cloudinaryClientUploadBeforeChange,
   cloudinaryClientUploadBeforeValidate,
 } from "../hooks/cloudinary-client-upload";
+import {
+  cloudinaryMediaAfterRead,
+  getCloudinaryAdminThumbnail,
+} from "../hooks/cloudinary-media-storage";
+import type { CloudinaryMediaDoc } from "@/lib/cloudinary/delivery";
+import { isCloudinaryMediaStorageEnabled } from "@/lib/cloudinary/config";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -18,15 +24,20 @@ export const Media: CollectionConfig = {
     defaultColumns: ["filename", "mimeType", "updatedAt"],
     group: "内容",
     description:
-      "图片与视频从浏览器直传 Cloudinary（不经 Vercel）。请使用上传按钮选择文件，等待进度完成后再保存。",
+      "图片与视频从浏览器直传 Cloudinary（不经 Vercel 本地磁盘）。请使用上传按钮选择文件，等待进度完成后再保存。",
   },
   upload: {
     mimeTypes: ["image/*", "video/*"],
     bulkUpload: true,
+    /** 禁止 Payload 在 Vercel 等无状态环境读写 /var/task/media */
+    disableLocalStorage: isCloudinaryMediaStorageEnabled(),
+    adminThumbnail: ({ doc }) =>
+      getCloudinaryAdminThumbnail(doc as CloudinaryMediaDoc),
   },
   hooks: {
     beforeValidate: [cloudinaryClientUploadBeforeValidate],
     beforeChange: [cloudinaryClientUploadBeforeChange],
+    afterRead: [cloudinaryMediaAfterRead],
   },
   fields: [
     {

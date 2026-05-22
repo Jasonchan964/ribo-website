@@ -16,7 +16,7 @@ import {
 } from "./payload/collections";
 import { cloudinaryAdapter } from "./payload/cloudinary-adapter";
 import { cloudinaryClientUploadsPlugin } from "./payload/cloudinary-client-uploads-plugin";
-import { isCloudinaryConfigured } from "./lib/cloudinary/config";
+import { isCloudinaryMediaStorageEnabled } from "./lib/cloudinary/config";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -100,7 +100,7 @@ export default buildConfig({
   sharp,
   plugins: [
     cloudStoragePlugin({
-      enabled: isCloudinaryConfigured(),
+      enabled: isCloudinaryMediaStorageEnabled(),
       collections: {
         media: {
           adapter: cloudinaryAdapter,

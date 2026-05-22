@@ -12,6 +12,7 @@ export {
   getCloudinaryPublicConfig,
   getCloudinaryUploadPreset,
   isCloudinaryConfigured,
+  isCloudinaryMediaStorageEnabled,
   isCloudinaryClientUploadReady,
   resolveUploadFolder,
   resolveUploadFolderPublic,
@@ -39,3 +40,8 @@ export {
   type CloudinaryUploadResult,
 } from "./types";
 export { uploadMediaToCloudinary, type UploadMediaOptions } from "./upload-client";
+export {
+  resolveCloudinaryAdminThumbnail,
+  resolveCloudinaryMediaUrl,
+  type CloudinaryMediaDoc,
+} from "./delivery";

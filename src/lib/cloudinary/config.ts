@@ -63,6 +63,13 @@ export function isCloudinaryConfigured(): boolean {
   );
 }
 
+/** 是否将 media 集合托管到 Cloudinary（仅需 cloud name，用于禁用本地磁盘） */
+export function isCloudinaryMediaStorageEnabled(): boolean {
+  return Boolean(
+    readEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME") ?? readEnv("CLOUDINARY_CLOUD_NAME"),
+  );
+}
+
 /** 浏览器直传 Cloudinary（未签名 preset 或完整签名配置） */
 export function isCloudinaryClientUploadReady(): boolean {
   const cloudName = readEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");

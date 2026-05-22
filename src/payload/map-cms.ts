@@ -1,8 +1,5 @@
-import {
-  cloudinaryImageUrl,
-  cloudinaryVideoUrl,
-} from "@/lib/cloudinary/url";
-import { isCloudinaryConfigured } from "@/lib/cloudinary/config";
+import { resolveCloudinaryMediaUrl } from "@/lib/cloudinary/delivery";
+import { isCloudinaryMediaStorageEnabled } from "@/lib/cloudinary/config";
 import type { CaseStudy, LocalizedString, Product } from "@/lib/types";
 
 type LocalizedPayload = { cn?: string | null; en?: string | null } | null | undefined;
@@ -25,21 +22,13 @@ function resolveMediaUrl(media: MediaDoc | string | number | null | undefined): 
   if (!media || typeof media === "string" || typeof media === "number") return "";
 
   const doc = media as MediaDoc;
+
+  if (isCloudinaryMediaStorageEnabled()) {
+    const cloudinaryUrl = resolveCloudinaryMediaUrl(doc);
+    if (cloudinaryUrl) return cloudinaryUrl;
+  }
+
   const rawUrl = typeof doc.url === "string" ? doc.url.trim() : "";
-
-  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
-    return rawUrl;
-  }
-
-  const publicId =
-    (typeof doc.cloudinaryPublicId === "string" && doc.cloudinaryPublicId) ||
-    (typeof doc.filename === "string" && doc.filename) ||
-    "";
-
-  if (publicId && isCloudinaryConfigured()) {
-    const isVideo = String(doc.mimeType ?? "").startsWith("video/");
-    return isVideo ? cloudinaryVideoUrl(publicId) : cloudinaryImageUrl(publicId);
-  }
 
   /** 同站资源保持相对路径，避免 NEXT_PUBLIC_SITE_URL 指向正式域时在本地把图片拼成外站 URL 导致 next/image 报错 */
   if (rawUrl.startsWith("/")) {
