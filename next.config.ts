@@ -27,6 +27,7 @@ function allowedDevOriginsFromEnv(): string[] {
 }
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["pg"],
   allowedDevOrigins: allowedDevOriginsFromEnv(),
   images: {
     remotePatterns: [

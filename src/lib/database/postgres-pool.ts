@@ -1,7 +1,5 @@
-import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
 import pg from "pg";
 import type { Pool, PoolConfig } from "pg";
-import ws from "ws";
 
 type PgModule = typeof pg;
 
@@ -30,12 +28,6 @@ export function isServerlessRuntime(): boolean {
   );
 }
 
-function configureNeonDriver(): void {
-  if (isServerlessRuntime()) {
-    neonConfig.webSocketConstructor = ws;
-  }
-}
-
 export function isPostgresConnectionString(url: string): boolean {
   const trimmed = url.trim();
   return (
@@ -60,17 +52,18 @@ function warnIfNotNeonPooler(connectionString: string): void {
 
     if (host.includes("neon.tech") && !host.includes("-pooler")) {
       console.warn(
-        "[db] Vercel/Serverless: DATABASE_URL 建议使用 Neon「Pooled connection」（主机名含 -pooler），否则易出现连接超时。",
+        "[db] Vercel/Serverless: DATABASE_URL 建议使用 Neon「Pooled connection」（主机名含 -pooler）。",
       );
     }
   } catch {
-    /* ignore invalid URL during local bootstrap */
+    /* ignore */
   }
 }
 
 /**
- * Neon + Vercel Serverless 推荐 pg Pool 参数。
- * TLS 由 DATABASE_URL 的 sslmode 控制，勿在此设置 pool.ssl。
+ * Payload connect() 会通过 pool.connect() 长期占用 1 条连接（错误监听），
+ * 因此 Serverless 下 max 不能为 1，否则 Admin/查询会全部超时。
+ * TLS 由 DATABASE_URL 的 sslmode 控制，勿设置 pool.ssl。
  */
 export function buildPostgresPoolConfig(connectionString: string): PoolConfig {
   const serverless = isServerlessRuntime();
@@ -79,23 +72,17 @@ export function buildPostgresPoolConfig(connectionString: string): PoolConfig {
 
   return {
     connectionString,
-    max: serverless ? 1 : 10,
+    // Payload 常驻 1 条 connect + 业务查询至少需要再 1 条
+    max: serverless ? 2 : 10,
     min: 0,
     idleTimeoutMillis: serverless ? 10_000 : 30_000,
-    connectionTimeoutMillis: 10_000,
+    connectionTimeoutMillis: serverless ? 20_000 : 10_000,
     allowExitOnIdle: serverless,
   };
 }
 
 function createPool(connectionString: string): Pool {
-  const poolConfig = buildPostgresPoolConfig(connectionString);
-
-  if (isServerlessRuntime()) {
-    configureNeonDriver();
-    return new NeonPool(poolConfig) as unknown as Pool;
-  }
-
-  return new pg.Pool(poolConfig);
+  return new pg.Pool(buildPostgresPoolConfig(connectionString));
 }
 
 /**
@@ -119,7 +106,7 @@ export function getSharedPostgresPool(connectionString: string): Pool {
 }
 
 /**
- * 供 Payload postgresAdapter 使用：`new pg.Pool()` 返回 globalThis 单例。
+ * 供 Payload postgresAdapter：`new pg.Pool()` 返回 globalThis 单例。
  */
 export function getPayloadPgModule(): PgModule {
   function SharedPool(
