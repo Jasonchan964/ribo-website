@@ -10,7 +10,10 @@ import {
 } from "@/lib/cloudinary/mime";
 import { resolveUploadFolderPublic } from "@/lib/cloudinary/config";
 import type { ClientUploadParams } from "@/lib/cloudinary/upload-params.types";
-import { uploadMediaToCloudinary } from "@/lib/cloudinary/upload-client";
+import {
+  ensureBinaryUploadFile,
+  uploadMediaToCloudinary,
+} from "@/lib/cloudinary/upload-client";
 
 export const CloudinaryClientUploadHandler = createClientUploadHandler({
   handler: async ({
@@ -20,7 +23,12 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
     serverURL,
     updateFilename,
   }) => {
-    const resourceType = resourceTypeFromMime(file.type);
+    const resourceTypeGuess =
+      file.type.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/i.test(file.name)
+        ? "video"
+        : "image";
+    const uploadFile = ensureBinaryUploadFile(file, resourceTypeGuess);
+    const resourceType = resourceTypeFromMime(uploadFile.type);
     const folder = resolveUploadFolderPublic(resourceType);
 
     const endpointRoute = formatAdminURL({
@@ -34,9 +42,9 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        filename: file.name,
-        filesize: file.size,
-        mimeType: file.type,
+        filename: uploadFile.name,
+        filesize: uploadFile.size,
+        mimeType: uploadFile.type,
         resourceType,
         folder,
       }),
@@ -57,14 +65,14 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
     const uploadParams = (await signResponse.json()) as ClientUploadParams;
 
     const result = await uploadMediaToCloudinary({
-      file,
+      file: uploadFile,
       resourceType,
       folder,
       uploadParams,
     });
 
     const mimeType = resolveMimeType({
-      fileType: file.type,
+      fileType: uploadFile.type,
       format: result.format,
       resourceType: result.resourceType as "image" | "video",
     });

@@ -2,6 +2,7 @@ import type { CloudinaryResourceType } from "@/lib/cloudinary/config";
 import type { ClientUploadParams } from "@/lib/cloudinary/upload-params.types";
 import type { CloudinaryApiResponse, CloudinaryUploadResult } from "@/lib/cloudinary/types";
 import { mapCloudinaryResponse } from "@/lib/cloudinary/types";
+import { mimeFromFilename } from "@/lib/cloudinary/mime";
 
 /** Cloudinary recommends chunked uploads above ~20MB */
 const CHUNK_THRESHOLD_BYTES = 20 * 1024 * 1024;
@@ -17,6 +18,33 @@ export type UploadMediaOptions = {
   uploadParams?: ClientUploadParams;
   onProgress?: (percent: number) => void;
 };
+
+function hasTrustedBinaryMime(type: string): boolean {
+  const normalized = type.trim().toLowerCase();
+  return (
+    normalized.startsWith("image/") ||
+    normalized.startsWith("video/")
+  ) && !normalized.startsWith("text/");
+}
+
+/**
+ * 浏览器常把 PNG 标成 text/plain，导致 Cloudinary 拒绝。
+ * 用扩展名重建带正确 MIME 的 File，保证 multipart 部件为 image/png 等。
+ */
+export function ensureBinaryUploadFile(
+  file: File,
+  resourceType: CloudinaryResourceType,
+): File {
+  if (hasTrustedBinaryMime(file.type)) {
+    return file;
+  }
+
+  const type = mimeFromFilename(file.name, resourceType);
+  return new File([file], file.name, {
+    type,
+    lastModified: file.lastModified,
+  });
+}
 
 async function fetchClientUploadParams(
   options: Pick<UploadMediaOptions, "resourceType" | "folder" | "authToken">,
@@ -72,10 +100,53 @@ function appendDirectUploadFields(
   }
 }
 
-function getUploadUrl(params: ClientUploadParams): string {
-  return params.uploadUrl;
+function buildUploadFormData(
+  file: File,
+  params: ClientUploadParams,
+  extra?: Record<string, string>,
+): FormData {
+  const formData = new FormData();
+  formData.append("file", file, file.name);
+  appendDirectUploadFields(formData, params, extra);
+  return formData;
 }
 
+function parseCloudinaryUploadResponse(
+  status: number,
+  bodyText: string,
+): CloudinaryUploadResult {
+  let data: CloudinaryApiResponse;
+  try {
+    data = JSON.parse(bodyText) as CloudinaryApiResponse;
+  } catch {
+    throw new Error("Invalid response from Cloudinary.");
+  }
+
+  if (status >= 400 || data.error) {
+    throw new Error(data.error?.message ?? "Cloudinary upload failed.");
+  }
+
+  return mapCloudinaryResponse(data);
+}
+
+/**
+ * 标准直传：仅 POST + FormData，由浏览器生成 multipart boundary。
+ * 切勿设置 Content-Type（勿用 text/plain / application/json）。
+ */
+async function uploadWithFetch(
+  uploadUrl: string,
+  formData: FormData,
+): Promise<CloudinaryUploadResult> {
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    body: formData,
+  });
+
+  const bodyText = await response.text();
+  return parseCloudinaryUploadResponse(response.status, bodyText);
+}
+
+/** 需要上传进度时使用 XHR（同样不设置 Content-Type）。 */
 function uploadWithXhr(
   uploadUrl: string,
   formData: FormData,
@@ -92,20 +163,26 @@ function uploadWithXhr(
 
     xhr.onload = () => {
       try {
-        const data = JSON.parse(xhr.responseText) as CloudinaryApiResponse;
-        if (xhr.status >= 400 || data.error) {
-          reject(new Error(data.error?.message ?? "Cloudinary upload failed."));
-          return;
-        }
-        resolve(mapCloudinaryResponse(data));
-      } catch {
-        reject(new Error("Invalid response from Cloudinary."));
+        resolve(parseCloudinaryUploadResponse(xhr.status, xhr.responseText));
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error("Cloudinary upload failed."));
       }
     };
 
     xhr.onerror = () => reject(new Error("Network error during upload."));
     xhr.send(formData);
   });
+}
+
+async function uploadToCloudinary(
+  uploadUrl: string,
+  formData: FormData,
+  onProgress?: (percent: number) => void,
+): Promise<CloudinaryUploadResult> {
+  if (onProgress) {
+    return uploadWithXhr(uploadUrl, formData, onProgress);
+  }
+  return uploadWithFetch(uploadUrl, formData);
 }
 
 async function uploadChunked(
@@ -117,18 +194,23 @@ async function uploadChunked(
   const chunkSize = CHUNK_SIZE_BYTES;
   let start = 0;
   let result: CloudinaryUploadResult | null = null;
-  const uploadUrl = getUploadUrl(params);
+  const uploadUrl = params.uploadUrl;
+  const chunkMime = file.type || mimeFromFilename(file.name, params.resourceType);
 
   while (start < total) {
     const end = Math.min(start + chunkSize, total);
-    const chunk = file.slice(start, end);
-    const formData = new FormData();
-    formData.append("file", chunk);
-    appendDirectUploadFields(formData, params, {
-      chunk_size: String(chunkSize),
-    });
+    const slice = file.slice(start, end);
+    const chunkBlob =
+      slice.type && hasTrustedBinaryMime(slice.type)
+        ? slice
+        : new Blob([slice], { type: chunkMime });
+    const formData = buildUploadFormData(
+      new File([chunkBlob], file.name, { type: chunkMime }),
+      params,
+      { chunk_size: String(chunkSize) },
+    );
 
-    result = await uploadWithXhr(uploadUrl, formData, (chunkPercent) => {
+    result = await uploadToCloudinary(uploadUrl, formData, (chunkPercent) => {
       if (!onProgress) return;
       const overall = Math.round(
         ((start + (chunkPercent / 100) * (end - start)) / total) * 100,
@@ -149,7 +231,7 @@ async function uploadChunked(
 
 /**
  * 浏览器 → Cloudinary 直传（不经过 Vercel 请求体）。
- * 使用 FormData：`file`（二进制）、`folder`（目录参数）、以及 `upload_preset` 或签名参数。
+ * FormData：`file` 为原始 File/Blob 二进制，`upload_preset` / `folder` 等字段单独 append。
  */
 export async function uploadMediaToCloudinary(
   options: UploadMediaOptions,
@@ -158,13 +240,12 @@ export async function uploadMediaToCloudinary(
     options.uploadParams ??
     (await fetchClientUploadParams(options));
 
-  if (options.file.size > CHUNK_THRESHOLD_BYTES) {
-    return uploadChunked(options.file, params, options.onProgress);
+  const file = ensureBinaryUploadFile(options.file, options.resourceType);
+
+  if (file.size > CHUNK_THRESHOLD_BYTES) {
+    return uploadChunked(file, params, options.onProgress);
   }
 
-  const formData = new FormData();
-  formData.append("file", options.file);
-  appendDirectUploadFields(formData, params);
-
-  return uploadWithXhr(getUploadUrl(params), formData, options.onProgress);
+  const formData = buildUploadFormData(file, params);
+  return uploadToCloudinary(params.uploadUrl, formData, options.onProgress);
 }

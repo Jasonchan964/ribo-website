@@ -27,6 +27,19 @@ export function buildPayloadFilename(
   return `${safeBase}.${ext}`;
 }
 
+/** 从文件名扩展名推断 MIME（用于修正浏览器误报的 text/plain 等）。 */
+export function mimeFromFilename(
+  filename: string,
+  resourceType: CloudinaryResourceType,
+): string {
+  const match = filename.match(/\.([a-zA-Z0-9]+)$/);
+  const ext = match?.[1] ?? "";
+  return (
+    mimeFromFormat(ext, resourceType) ??
+    (resourceType === "video" ? "video/mp4" : "image/jpeg")
+  );
+}
+
 export function mimeFromFormat(
   format: string,
   resourceType: CloudinaryResourceType,
