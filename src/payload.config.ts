@@ -52,7 +52,7 @@ function buildPostgresPoolConfig(): PoolConfig {
 
 /**
  * push: true — 开启 Drizzle 开发态 schema 自动同步（Payload 在 NODE_ENV=production 运行时不会 push）。
- * 线上 Neon：由 Vercel 构建脚本 scripts/sync-db-schema.ts 在 deploy 前执行一次 push，无需本地 db:push / migrate。
+ * 线上 Neon：由 scripts/sync-db-schema.ts 单独执行（NODE_ENV=development + PAYLOAD_FORCE_DRIZZLE_PUSH），勿挂到 next build。
  * PAYLOAD_DISABLE_PUSH=true 可关闭 push（高级）。
  */
 function shouldAutoPushSchema(): boolean {
