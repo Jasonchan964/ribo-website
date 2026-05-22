@@ -27,7 +27,11 @@ function allowedDevOriginsFromEnv(): string[] {
 }
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: [
+    "pg",
+    "@payloadcms/db-postgres",
+    "drizzle-orm",
+  ],
   allowedDevOrigins: allowedDevOriginsFromEnv(),
   images: {
     remotePatterns: [

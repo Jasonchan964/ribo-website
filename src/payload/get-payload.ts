@@ -28,7 +28,12 @@ export async function getPayloadClient(): Promise<Payload> {
   }
 
   if (!globalForPayload.__riboPayloadPromise) {
-    globalForPayload.__riboPayloadPromise = getPayload({ config });
+    globalForPayload.__riboPayloadPromise = getPayload({ config }).catch(
+      (error) => {
+        globalForPayload.__riboPayloadPromise = null;
+        throw error;
+      },
+    );
   }
 
   return globalForPayload.__riboPayloadPromise;
