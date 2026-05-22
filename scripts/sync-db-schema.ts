@@ -17,10 +17,12 @@ if (process.env.VERCEL !== "1" || !isPostgresUrl) {
 }
 
 // Payload connect() 仅在 NODE_ENV !== 'production' 时 push；构建环境常为 production，需覆盖。
-process.env.NODE_ENV = "development";
-process.env.PAYLOAD_FORCE_DRIZZLE_PUSH = "true";
-process.env.DISABLE_PAYLOAD_HMR = "true";
-process.env.CI = process.env.CI ?? "1";
+// @types/node 将 NODE_ENV 标为 readonly，用 Record 写入以避免 next build 类型检查失败。
+const env = process.env as Record<string, string | undefined>;
+env.NODE_ENV = "development";
+env.PAYLOAD_FORCE_DRIZZLE_PUSH = "true";
+env.DISABLE_PAYLOAD_HMR = "true";
+if (!env.CI) env.CI = "1";
 
 // 须在加载 Payload 之前执行：自动确认 Drizzle push 的 data-loss / warnings，避免无 TTY 死锁。
 const require = createRequire(import.meta.url);
