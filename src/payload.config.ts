@@ -1,7 +1,6 @@
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { PoolConfig } from "pg";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
@@ -17,14 +16,14 @@ import {
 import { cloudinaryAdapter } from "./payload/cloudinary-adapter";
 import { cloudinaryClientUploadsPlugin } from "./payload/cloudinary-client-uploads-plugin";
 import { isCloudinaryMediaStorageEnabled } from "./lib/cloudinary/config";
+import { buildPostgresPoolConfig } from "./lib/database/postgres-pool";
+import { isPostgresConnectionString } from "./lib/database/postgres-url";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
-const isPostgresUrl =
-  databaseUrl.startsWith("postgres://") ||
-  databaseUrl.startsWith("postgresql://");
+const isPostgresUrl = isPostgresConnectionString(databaseUrl);
 
 /**
  * Vercel 无法在仓库内持久化 SQLite；未配置 Postgres 时用临时目录中的文件，
@@ -38,36 +37,22 @@ function vercelFallbackSqliteUrl(): string {
 }
 
 /**
- * Neon + Vercel Serverless：pg Pool 选项会传给每个底层 Client（连接超时、SSL、池大小）。
- * @see https://node-postgres.com/apis/pool
- */
-function buildPostgresPoolConfig(): PoolConfig {
-  return {
-    connectionString: databaseUrl,
-    max: 10,
-    connectionTimeoutMillis: 10_000,
-    ssl: { rejectUnauthorized: false },
-  };
-}
-
-/**
  * push: true — 开启 Drizzle 开发态 schema 自动同步（Payload 在 NODE_ENV=production 运行时不会 push）。
  * 线上 Neon：由 scripts/sync-db-schema.ts 单独执行（NODE_ENV=development + PAYLOAD_FORCE_DRIZZLE_PUSH），勿挂到 next build。
  * PAYLOAD_DISABLE_PUSH=true 可关闭 push（高级）。
  */
 function shouldAutoPushSchema(): boolean {
   if (process.env.PAYLOAD_DISABLE_PUSH === "true") return false;
-  // Vercel 构建阶段由 scripts/sync-db-schema.ts 执行 push，运行时避免连 Neon 做 schema 同步
-  if (process.env.VERCEL === "1" && process.env.NODE_ENV === "production") {
-    return false;
-  }
+  // 生产 / Vercel 运行时禁止 Drizzle push（避免无 TTY 死锁与启动时长时间阻塞）
+  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.VERCEL === "1") return false;
   return true;
 }
 
 function database() {
   if (isPostgresUrl) {
     return postgresAdapter({
-      pool: buildPostgresPoolConfig(),
+      pool: buildPostgresPoolConfig(databaseUrl),
       push: shouldAutoPushSchema(),
     });
   }
