@@ -1,7 +1,13 @@
 import config from "@payload-config";
 import { getPayload, type Payload } from "payload";
+import {
+  getSharedPostgresPool,
+  isPostgresConnectionString,
+} from "@/lib/database/postgres-pool";
 
-let payloadPromise: Promise<Payload> | null = null;
+const globalForPayload = globalThis as typeof globalThis & {
+  __riboPayloadPromise?: Promise<Payload> | null;
+};
 
 /** 是否应尝试连接 Payload（需配置密钥；数据库默认使用 ribo-cms.db） */
 export function isPayloadConfigured(): boolean {
@@ -15,8 +21,15 @@ export function isPayloadEnabled(): boolean {
 }
 
 export async function getPayloadClient(): Promise<Payload> {
-  if (!payloadPromise) {
-    payloadPromise = getPayload({ config });
+  const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
+
+  if (isPostgresConnectionString(databaseUrl)) {
+    getSharedPostgresPool(databaseUrl);
   }
-  return payloadPromise;
+
+  if (!globalForPayload.__riboPayloadPromise) {
+    globalForPayload.__riboPayloadPromise = getPayload({ config });
+  }
+
+  return globalForPayload.__riboPayloadPromise;
 }

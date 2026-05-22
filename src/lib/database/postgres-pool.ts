@@ -1,101 +1,143 @@
-import type { PoolConfig } from "pg";
-import {
-  parsePostgresUrl,
-  validatePostgresUrlForRuntime,
-  type ParsedPostgresUrl,
-} from "./postgres-url";
+import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
+import pg from "pg";
+import type { Pool, PoolConfig } from "pg";
+import ws from "ws";
 
-let loggedPoolHints = false;
+type PgModule = typeof pg;
 
-function logPoolHintsOnce(parsed: ParsedPostgresUrl | null): void {
-  if (loggedPoolHints || !parsed) return;
-  loggedPoolHints = true;
+type PoolStore = {
+  pool: Pool | null;
+  connectionString: string | null;
+};
 
-  const { errors, warnings } = validatePostgresUrlForRuntime(parsed);
-  for (const msg of errors) {
-    console.error(`[db] ${msg}`);
-  }
-  for (const msg of warnings) {
-    console.warn(`[db] ${msg}`);
-  }
-}
+const GLOBAL_POOL_STORE_KEY = "__riboPostgresPoolStore";
+const GLOBAL_POOL_WARNED_KEY = "__riboPostgresPoolWarned";
 
-/**
- * 从连接串的 sslmode 推导 pg.Pool 的 ssl 选项。
- * 若连接串已含 sslmode，则不再传入冲突的 ssl 对象（避免与 verify-full 冲突并触发 SSL 警告/挂起）。
- */
-export function resolvePgSslFromUrl(
-  parsed: ParsedPostgresUrl | null,
-): PoolConfig["ssl"] | undefined {
-  const sslmode = parsed?.sslmode?.toLowerCase() ?? null;
-
-  if (sslmode) {
-    // 由 connectionString 中的 sslmode 驱动 TLS，避免重复配置。
-    return undefined;
-  }
-
-  if (parsed?.isNeon) {
-    return { rejectUnauthorized: true };
-  }
-
-  return undefined;
-}
-
-/**
- * Neon + Vercel Serverless 的 pg.Pool 配置。
- * @see https://node-postgres.com/apis/pool
- * @see https://neon.com/docs/connect/choose-connection
- */
-export function buildPostgresPoolConfig(databaseUrl: string): PoolConfig {
-  const parsed = parsePostgresUrl(databaseUrl);
-  logPoolHintsOnce(parsed);
-
-  if (process.env.VERCEL === "1" && !parsed) {
-    throw new Error(
-      "[db] Vercel 上 DATABASE_URL 无法解析为 Postgres 连接串；请从 Neon 复制 Pooled 连接串，勿手工拼接 sslmode。",
-    );
-  }
-
-  const isServerless =
-    process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME != null;
-
-  const maxFromEnv = Number.parseInt(
-    process.env.DATABASE_POOL_MAX ?? "",
-    10,
-  );
-  const max =
-    Number.isFinite(maxFromEnv) && maxFromEnv > 0
-      ? maxFromEnv
-      : isServerless
-        ? 1
-        : 10;
-
-  const config: PoolConfig = {
-    connectionString: parsed?.connectionString ?? normalizeRawUrl(databaseUrl),
-    max,
-    min: 0,
-    connectionTimeoutMillis: 10_000,
-    idleTimeoutMillis: isServerless ? 5_000 : 30_000,
-    allowExitOnIdle: isServerless,
-    keepAlive: true,
-    keepAliveInitialDelayMillis: 10_000,
-    application_name: process.env.VERCEL
-      ? "ribo-website-vercel"
-      : "ribo-website",
+function getPoolStore(): PoolStore {
+  const g = globalThis as typeof globalThis & {
+    [GLOBAL_POOL_STORE_KEY]?: PoolStore;
   };
-
-  const ssl = resolvePgSslFromUrl(parsed);
-  if (ssl !== undefined) {
-    config.ssl = ssl;
+  if (!g[GLOBAL_POOL_STORE_KEY]) {
+    g[GLOBAL_POOL_STORE_KEY] = { pool: null, connectionString: null };
   }
-
-  if (isServerless) {
-    config.options = "-c statement_timeout=60000";
-  }
-
-  return config;
+  return g[GLOBAL_POOL_STORE_KEY];
 }
 
-function normalizeRawUrl(raw: string): string {
-  return raw.trim();
+export function isServerlessRuntime(): boolean {
+  return (
+    process.env.VERCEL === "1" ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME != null
+  );
+}
+
+function configureNeonDriver(): void {
+  if (isServerlessRuntime()) {
+    neonConfig.webSocketConstructor = ws;
+  }
+}
+
+export function isPostgresConnectionString(url: string): boolean {
+  const trimmed = url.trim();
+  return (
+    trimmed.startsWith("postgres://") ||
+    trimmed.startsWith("postgresql://")
+  );
+}
+
+function warnIfNotNeonPooler(connectionString: string): void {
+  if (!isServerlessRuntime()) return;
+
+  const g = globalThis as typeof globalThis & {
+    [GLOBAL_POOL_WARNED_KEY]?: boolean;
+  };
+  if (g[GLOBAL_POOL_WARNED_KEY]) return;
+  g[GLOBAL_POOL_WARNED_KEY] = true;
+
+  try {
+    const host = new URL(
+      connectionString.replace(/^postgresql?:\/\//, "https://"),
+    ).hostname.toLowerCase();
+
+    if (host.includes("neon.tech") && !host.includes("-pooler")) {
+      console.warn(
+        "[db] Vercel/Serverless: DATABASE_URL 建议使用 Neon「Pooled connection」（主机名含 -pooler），否则易出现连接超时。",
+      );
+    }
+  } catch {
+    /* ignore invalid URL during local bootstrap */
+  }
+}
+
+/**
+ * Neon + Vercel Serverless 推荐 pg Pool 参数。
+ * TLS 由 DATABASE_URL 的 sslmode 控制，勿在此设置 pool.ssl。
+ */
+export function buildPostgresPoolConfig(connectionString: string): PoolConfig {
+  const serverless = isServerlessRuntime();
+
+  warnIfNotNeonPooler(connectionString);
+
+  return {
+    connectionString,
+    max: serverless ? 1 : 10,
+    min: 0,
+    idleTimeoutMillis: serverless ? 10_000 : 30_000,
+    connectionTimeoutMillis: 10_000,
+    allowExitOnIdle: serverless,
+  };
+}
+
+function createPool(connectionString: string): Pool {
+  const poolConfig = buildPostgresPoolConfig(connectionString);
+
+  if (isServerlessRuntime()) {
+    configureNeonDriver();
+    return new NeonPool(poolConfig) as unknown as Pool;
+  }
+
+  return new pg.Pool(poolConfig);
+}
+
+/**
+ * 进程内单例 Pool，避免 Serverless 重复 new Pool 耗尽 Neon 连接。
+ */
+export function getSharedPostgresPool(connectionString: string): Pool {
+  const store = getPoolStore();
+  const normalized = connectionString.trim();
+
+  if (store.pool && store.connectionString === normalized) {
+    return store.pool;
+  }
+
+  if (store.pool) {
+    void store.pool.end().catch(() => {});
+  }
+
+  store.pool = createPool(normalized);
+  store.connectionString = normalized;
+  return store.pool;
+}
+
+/**
+ * 供 Payload postgresAdapter 使用：`new pg.Pool()` 返回 globalThis 单例。
+ */
+export function getPayloadPgModule(): PgModule {
+  function SharedPool(
+    this: unknown,
+    options: PoolConfig = {},
+  ): Pool {
+    const connectionString =
+      (typeof options.connectionString === "string" &&
+        options.connectionString) ||
+      process.env.DATABASE_URL?.trim() ||
+      "";
+
+    if (!connectionString) {
+      throw new Error("[db] Missing DATABASE_URL for Postgres pool.");
+    }
+
+    return getSharedPostgresPool(connectionString);
+  }
+
+  return { ...pg, Pool: SharedPool as unknown as typeof pg.Pool };
 }

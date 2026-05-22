@@ -1,7 +1,6 @@
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { PoolConfig } from "pg";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
@@ -17,14 +16,17 @@ import {
 import { cloudinaryAdapter } from "./payload/cloudinary-adapter";
 import { cloudinaryClientUploadsPlugin } from "./payload/cloudinary-client-uploads-plugin";
 import { isCloudinaryMediaStorageEnabled } from "./lib/cloudinary/config";
+import {
+  buildPostgresPoolConfig,
+  getPayloadPgModule,
+  isPostgresConnectionString,
+} from "./lib/database/postgres-pool";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
-const isPostgresUrl =
-  databaseUrl.startsWith("postgres://") ||
-  databaseUrl.startsWith("postgresql://");
+const isPostgresUrl = isPostgresConnectionString(databaseUrl);
 
 /**
  * Vercel 无法在仓库内持久化 SQLite；未配置 Postgres 时用临时目录中的文件，
@@ -35,22 +37,6 @@ function vercelFallbackSqliteUrl(): string {
   const file = path.join(tmpdir(), "payload-cms-vercel.sqlite");
   const normalized = file.replace(/\\/g, "/");
   return normalized.startsWith("/") ? `file:${normalized}` : `file:/${normalized}`;
-}
-
-/**
- * Neon + Vercel Serverless：pg Pool 选项（连接超时、池大小）。
- * TLS / sslmode 仅由 DATABASE_URL 查询参数决定（如 sslmode=verify-full），勿在此传入 pool.ssl，
- * 否则会与连接串冲突并触发 pg 的 sslmode 警告。
- * @see https://node-postgres.com/apis/pool
- */
-function buildPostgresPoolConfig(): PoolConfig {
-  const isServerless = process.env.VERCEL === "1";
-
-  return {
-    connectionString: databaseUrl,
-    max: isServerless ? 1 : 10,
-    connectionTimeoutMillis: 10_000,
-  };
 }
 
 /**
@@ -70,7 +56,8 @@ function shouldAutoPushSchema(): boolean {
 function database() {
   if (isPostgresUrl) {
     return postgresAdapter({
-      pool: buildPostgresPoolConfig(),
+      pg: getPayloadPgModule(),
+      pool: buildPostgresPoolConfig(databaseUrl),
       push: shouldAutoPushSchema(),
     });
   }
