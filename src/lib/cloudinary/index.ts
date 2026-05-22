@@ -14,6 +14,7 @@ export {
   isCloudinaryConfigured,
   isCloudinaryClientUploadReady,
   resolveUploadFolder,
+  resolveUploadFolderPublic,
   getUploadEndpoint,
   type CloudinaryConfig,
   type CloudinaryResourceType,
@@ -24,14 +25,14 @@ export {
   resolveMimeType,
 } from "./mime";
 export { getCloudinaryServer } from "./server";
-export { createUploadSignature, type UploadSignaturePayload } from "./sign";
+export { createUploadSignature, type UploadSignaturePayload } from "./sign.server";
+export { createClientUploadParams } from "./upload-params.server";
 export {
-  createClientUploadParams,
   usesUnsignedCloudinaryUpload,
   type ClientUploadParams,
   type SignedUploadParams,
   type UnsignedUploadParams,
-} from "./upload-params";
+} from "./upload-params.types";
 export {
   mapCloudinaryResponse,
   type CloudinaryApiResponse,

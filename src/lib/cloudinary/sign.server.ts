@@ -3,18 +3,11 @@ import {
   getUploadEndpoint,
   resolveUploadFolder,
   type CloudinaryResourceType,
-} from "@/lib/cloudinary/config";
-import { getCloudinaryServer } from "@/lib/cloudinary/server";
+} from "./config";
+import { getCloudinaryServer } from "./server";
+import type { UploadSignaturePayload } from "./upload-params.types";
 
-export type UploadSignaturePayload = {
-  cloudName: string;
-  apiKey: string;
-  timestamp: number;
-  signature: string;
-  folder: string;
-  uploadUrl: string;
-  resourceType: CloudinaryResourceType;
-};
+export type { UploadSignaturePayload };
 
 export function createUploadSignature(options: {
   resourceType?: CloudinaryResourceType;

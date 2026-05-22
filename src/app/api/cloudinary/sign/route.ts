@@ -3,7 +3,7 @@ import {
   isCloudinaryClientUploadReady,
   type CloudinaryResourceType,
 } from "@/lib/cloudinary/config";
-import { createClientUploadParams } from "@/lib/cloudinary/upload-params";
+import { createClientUploadParams } from "@/lib/cloudinary/upload-params.server";
 
 export const runtime = "nodejs";
 

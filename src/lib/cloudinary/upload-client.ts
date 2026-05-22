@@ -1,8 +1,5 @@
 import type { CloudinaryResourceType } from "@/lib/cloudinary/config";
-import {
-  createClientUploadParams,
-  type ClientUploadParams,
-} from "@/lib/cloudinary/upload-params";
+import type { ClientUploadParams } from "@/lib/cloudinary/upload-params.types";
 import type { CloudinaryApiResponse, CloudinaryUploadResult } from "@/lib/cloudinary/types";
 import { mapCloudinaryResponse } from "@/lib/cloudinary/types";
 
@@ -167,5 +164,3 @@ export async function uploadMediaToCloudinary(
 
   return uploadWithXhr(getUploadUrl(params), formData, options.onProgress);
 }
-
-export { createClientUploadParams };

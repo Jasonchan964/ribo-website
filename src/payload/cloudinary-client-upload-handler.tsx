@@ -8,8 +8,8 @@ import {
   buildPayloadFilename,
   resolveMimeType,
 } from "@/lib/cloudinary/mime";
-import { resolveUploadFolder } from "@/lib/cloudinary/config";
-import type { ClientUploadParams } from "@/lib/cloudinary/upload-params";
+import { resolveUploadFolderPublic } from "@/lib/cloudinary/config";
+import type { ClientUploadParams } from "@/lib/cloudinary/upload-params.types";
 import { uploadMediaToCloudinary } from "@/lib/cloudinary/upload-client";
 
 export const CloudinaryClientUploadHandler = createClientUploadHandler({
@@ -21,7 +21,7 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
     updateFilename,
   }) => {
     const resourceType = resourceTypeFromMime(file.type);
-    const folder = resolveUploadFolder(resourceType);
+    const folder = resolveUploadFolderPublic(resourceType);
 
     const endpointRoute = formatAdminURL({
       apiRoute,

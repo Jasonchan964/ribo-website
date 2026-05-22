@@ -71,6 +71,26 @@ export function isCloudinaryClientUploadReady(): boolean {
   return isCloudinaryConfigured();
 }
 
+function getDefaultUploadFolders() {
+  const baseFolder = readEnv("CLOUDINARY_UPLOAD_FOLDER") ?? "ribo/products";
+  return {
+    imageFolder: readEnv("CLOUDINARY_IMAGE_FOLDER") ?? `${baseFolder}/images`,
+    videoFolder: readEnv("CLOUDINARY_VIDEO_FOLDER") ?? `${baseFolder}/videos`,
+  };
+}
+
+/** 客户端安全：仅依赖公开环境变量，不读取 API Secret */
+export function resolveUploadFolderPublic(
+  resourceType: CloudinaryResourceType,
+  folder?: string,
+): string {
+  if (folder) return folder;
+  const { imageFolder, videoFolder } = getDefaultUploadFolders();
+  if (resourceType === "video") return videoFolder;
+  return imageFolder;
+}
+
+/** 服务端：可读取完整 Cloudinary 配置 */
 export function resolveUploadFolder(
   resourceType: CloudinaryResourceType,
   folder?: string,

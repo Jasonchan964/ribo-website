@@ -5,7 +5,7 @@ import {
   type CloudinaryResourceType,
 } from "@/lib/cloudinary/config";
 import { resourceTypeFromMime } from "@/lib/cloudinary/client-upload-context";
-import { createClientUploadParams } from "@/lib/cloudinary/upload-params";
+import { createClientUploadParams } from "@/lib/cloudinary/upload-params.server";
 
 type SignBody = {
   collectionSlug?: string;

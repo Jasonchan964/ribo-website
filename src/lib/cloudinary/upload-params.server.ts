@@ -5,28 +5,10 @@ import {
   resolveUploadFolder,
   type CloudinaryResourceType,
 } from "./config";
-import { createUploadSignature, type UploadSignaturePayload } from "./sign";
+import { createUploadSignature } from "./sign.server";
+import type { ClientUploadParams } from "./upload-params.types";
 
-export type UnsignedUploadParams = {
-  mode: "unsigned";
-  cloudName: string;
-  uploadPreset: string;
-  uploadUrl: string;
-  folder: string;
-  resourceType: CloudinaryResourceType;
-};
-
-export type SignedUploadParams = UploadSignaturePayload & {
-  mode: "signed";
-};
-
-export type ClientUploadParams = UnsignedUploadParams | SignedUploadParams;
-
-export function usesUnsignedCloudinaryUpload(): boolean {
-  return Boolean(getCloudinaryUploadPreset());
-}
-
-/** 浏览器直传所需参数（未签名 preset 或服务端签名二选一） */
+/** 服务端：生成浏览器直传参数（未签名 preset 或签名） */
 export function createClientUploadParams(options: {
   resourceType?: CloudinaryResourceType;
   folder?: string;
