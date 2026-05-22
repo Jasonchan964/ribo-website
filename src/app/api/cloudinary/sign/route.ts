@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  isCloudinaryConfigured,
+  isCloudinaryClientUploadReady,
   type CloudinaryResourceType,
 } from "@/lib/cloudinary/config";
-import { createUploadSignature } from "@/lib/cloudinary/sign";
+import { createClientUploadParams } from "@/lib/cloudinary/upload-params";
 
 export const runtime = "nodejs";
 
@@ -21,9 +21,12 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isCloudinaryConfigured()) {
+  if (!isCloudinaryClientUploadReady()) {
     return NextResponse.json(
-      { error: "Cloudinary is not configured on the server." },
+      {
+        error:
+          "Cloudinary client upload is not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET (unsigned) or signing credentials.",
+      },
       { status: 503 },
     );
   }
@@ -48,14 +51,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payload = createUploadSignature({
+    const payload = createClientUploadParams({
       resourceType,
       folder: body.folder,
     });
     return NextResponse.json(payload);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to create upload signature.";
+      error instanceof Error
+        ? error.message
+        : "Failed to create Cloudinary upload parameters.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

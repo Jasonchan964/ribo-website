@@ -4,18 +4,13 @@ import { createClientUploadHandler } from "@payloadcms/plugin-cloud-storage/clie
 import { formatAdminURL } from "payload/shared";
 import type { CloudinaryClientUploadContext } from "@/lib/cloudinary/client-upload-context";
 import { resourceTypeFromMime } from "@/lib/cloudinary/client-upload-context";
+import {
+  buildPayloadFilename,
+  resolveMimeType,
+} from "@/lib/cloudinary/mime";
+import { resolveUploadFolder } from "@/lib/cloudinary/config";
+import type { ClientUploadParams } from "@/lib/cloudinary/upload-params";
 import { uploadMediaToCloudinary } from "@/lib/cloudinary/upload-client";
-import type { CloudinaryResourceType } from "@/lib/cloudinary/config";
-
-type SignResponse = {
-  uploadUrl: string;
-  apiKey: string;
-  timestamp: number;
-  signature: string;
-  folder: string;
-  cloudName: string;
-  resourceType: CloudinaryResourceType;
-};
 
 export const CloudinaryClientUploadHandler = createClientUploadHandler({
   handler: async ({
@@ -26,6 +21,7 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
     updateFilename,
   }) => {
     const resourceType = resourceTypeFromMime(file.type);
+    const folder = resolveUploadFolder(resourceType);
 
     const endpointRoute = formatAdminURL({
       apiRoute,
@@ -42,6 +38,7 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
         filesize: file.size,
         mimeType: file.type,
         resourceType,
+        folder,
       }),
     });
 
@@ -53,25 +50,35 @@ export const CloudinaryClientUploadHandler = createClientUploadHandler({
       const message =
         err.errors?.map((e) => e.message).join(", ") ||
         err.error ||
-        "Failed to get Cloudinary upload signature.";
+        "Failed to get Cloudinary upload parameters.";
       throw new Error(message);
     }
 
-    const signature = (await signResponse.json()) as SignResponse;
+    const uploadParams = (await signResponse.json()) as ClientUploadParams;
 
     const result = await uploadMediaToCloudinary({
       file,
       resourceType,
-      signature,
+      folder,
+      uploadParams,
     });
 
-    updateFilename(result.publicId);
+    const mimeType = resolveMimeType({
+      fileType: file.type,
+      format: result.format,
+      resourceType: result.resourceType as "image" | "video",
+    });
+
+    const payloadFilename = buildPayloadFilename(file.name, result.format);
+
+    updateFilename(payloadFilename);
 
     const context: CloudinaryClientUploadContext = {
       publicId: result.publicId,
       secureUrl: result.secureUrl,
-      resourceType: result.resourceType as CloudinaryResourceType,
-      mimeType: file.type,
+      resourceType: result.resourceType as "image" | "video",
+      mimeType,
+      payloadFilename,
       bytes: result.bytes,
       width: result.width,
       height: result.height,

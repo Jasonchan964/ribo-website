@@ -82,11 +82,12 @@ src/
 | Variable | Required | Description |
 | -------- | -------- | ----------- |
 | `NEXT_PUBLIC_SITE_URL` | Yes | 站点正式地址（SEO）；可填 `https://域名` 或仅域名（会自动补 `https://`） |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Yes* | Cloudinary 云名称（客户端上传端点） |
-| `CLOUDINARY_CLOUD_NAME` | Yes* | 同上，服务端签名用 |
-| `CLOUDINARY_API_KEY` | Yes* | Cloudinary API Key |
-| `CLOUDINARY_API_SECRET` | Yes* | Cloudinary API Secret（仅服务端，勿暴露） |
-| `UPLOAD_AUTH_SECRET` | Recommended | 保护 `POST /api/cloudinary/sign` |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Yes* | Cloudinary 云名称（浏览器直传端点） |
+| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Yes*† | **未签名上传预设**（推荐 Vercel：浏览器 → Cloudinary，绕过 4.5MB） |
+| `CLOUDINARY_CLOUD_NAME` | Yes‡ | 同上，服务端删除/签名用 |
+| `CLOUDINARY_API_KEY` | Yes‡ | Cloudinary API Key（签名模式或删除资源） |
+| `CLOUDINARY_API_SECRET` | Yes‡ | Cloudinary API Secret（仅服务端） |
+| `UPLOAD_AUTH_SECRET` | Recommended | 保护 `POST /api/cloudinary/sign`（自定义页面上传时） |
 | `CLOUDINARY_UPLOAD_FOLDER` | No | 根目录，默认 `ribo/products` |
 | `CLOUDINARY_IMAGE_FOLDER` | No | 产品图目录，默认 `ribo/products/images` |
 | `CLOUDINARY_VIDEO_FOLDER` | No | 机器视频目录，默认 `ribo/products/videos` |
@@ -96,12 +97,14 @@ src/
 | `CMS_ADMIN_EMAIL` | No | `npm run seed:cms` 使用的管理员邮箱 |
 | `CMS_ADMIN_PASSWORD` | No | `npm run seed:cms` 使用的初始密码 |
 
-\* 使用 `MediaUploader` 或 Payload 媒体库上传时需要 Cloudinary 变量。
+\* 媒体库 / `MediaUploader` 直传至少需要 `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`。  
+† 配置 **未签名 Upload Preset** 后，上传使用 `upload_preset` + `folder` 直传，无需把文件 POST 到 Vercel。  
+‡ 若未配置 `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`，则需 API Key/Secret 走签名上传；删除 Cloudinary 资源仍建议配置 Secret。
 
 ### CMS 与 Cloudinary
 
 - 后台路由：**`/admin`**（Payload CMS，内置于本 Next.js 项目）
-- 媒体上传：Admin **媒体库** 在已登录时使用 **浏览器直传 Cloudinary**（`clientUploads`），大视频不会经过 Vercel 的 ~4.5MB 请求体限制；超过约 20MB 时自动分片上传。直传目录见 `CLOUDINARY_*_FOLDER`。
+- 媒体上传：Admin **媒体库** 使用 **浏览器 → Cloudinary 直传**（`file` 二进制 + `folder` 参数，或 `upload_preset` 未签名模式），**不经过 Vercel 请求体**；超过约 20MB 自动分片。`filename` 保存为带扩展名的真实文件名，`cloudinaryPublicId` 保存 Cloudinary 路径，避免 `text/plain (from extension ribo/products/...)` 类 MIME 错误。
 - **Vercel 上** 必须在环境变量中配置 **Postgres** 的 `DATABASE_URL`（见上表）；本地仍可用默认 SQLite `ribo-cms.db`。
 
 ### Cloudinary 上传组件（可选，供自定义页面）

@@ -1,11 +1,11 @@
 import type { PayloadHandler } from "payload";
 import { APIError, Forbidden } from "payload";
 import {
-  isCloudinaryConfigured,
+  isCloudinaryClientUploadReady,
   type CloudinaryResourceType,
 } from "@/lib/cloudinary/config";
-import { createUploadSignature } from "@/lib/cloudinary/sign";
 import { resourceTypeFromMime } from "@/lib/cloudinary/client-upload-context";
+import { createClientUploadParams } from "@/lib/cloudinary/upload-params";
 
 type SignBody = {
   collectionSlug?: string;
@@ -13,12 +13,16 @@ type SignBody = {
   mimeType?: string;
   filesize?: number;
   resourceType?: CloudinaryResourceType;
+  folder?: string;
 };
 
-/** Payload admin endpoint: returns Cloudinary signed upload params (no file bytes). */
+/** Payload admin：仅返回直传参数（签名或未签名 preset），不接收文件字节。 */
 export const cloudinaryClientUploadServerHandler: PayloadHandler = async (req) => {
-  if (!isCloudinaryConfigured()) {
-    throw new APIError("Cloudinary is not configured.", 503);
+  if (!isCloudinaryClientUploadReady()) {
+    throw new APIError(
+      "Cloudinary client upload is not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and either NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET or server signing credentials.",
+      503,
+    );
   }
 
   if (!req.user) {
@@ -38,7 +42,10 @@ export const cloudinaryClientUploadServerHandler: PayloadHandler = async (req) =
     throw new APIError("Invalid resourceType.", 400);
   }
 
-  const payload = createUploadSignature({ resourceType });
+  const payload = createClientUploadParams({
+    resourceType,
+    folder: body.folder,
+  });
 
   return Response.json(payload);
 };

@@ -1,5 +1,8 @@
 import type { CollectionConfig } from "payload";
-import { cloudinaryClientUploadBeforeChange } from "../hooks/cloudinary-client-upload";
+import {
+  cloudinaryClientUploadBeforeChange,
+  cloudinaryClientUploadBeforeValidate,
+} from "../hooks/cloudinary-client-upload";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -14,12 +17,15 @@ export const Media: CollectionConfig = {
     useAsTitle: "filename",
     defaultColumns: ["filename", "mimeType", "updatedAt"],
     group: "内容",
+    description:
+      "图片与视频从浏览器直传 Cloudinary（不经 Vercel）。请使用上传按钮选择文件，等待进度完成后再保存。",
   },
   upload: {
     mimeTypes: ["image/*", "video/*"],
     bulkUpload: true,
   },
   hooks: {
+    beforeValidate: [cloudinaryClientUploadBeforeValidate],
     beforeChange: [cloudinaryClientUploadBeforeChange],
   },
   fields: [
@@ -35,6 +41,7 @@ export const Media: CollectionConfig = {
       admin: {
         readOnly: true,
         position: "sidebar",
+        description: "Cloudinary 资源路径（非 MIME），用于删除与 CDN 引用。",
       },
     },
   ],

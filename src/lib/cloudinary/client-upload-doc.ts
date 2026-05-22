@@ -18,7 +18,7 @@ export function applyCloudinaryClientUploadToData<T extends Record<string, unkno
 ): T {
   return {
     ...data,
-    filename: ctx.publicId,
+    filename: ctx.payloadFilename,
     url: ctx.secureUrl,
     mimeType: ctx.mimeType,
     filesize: ctx.bytes,

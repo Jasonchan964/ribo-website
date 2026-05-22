@@ -1,87 +1,64 @@
 import type { Adapter } from "@payloadcms/plugin-cloud-storage/types";
-import type { UploadApiResponse } from "cloudinary";
+import { APIError } from "payload";
 import {
   getCloudinaryConfig,
   isCloudinaryConfigured,
-  resolveUploadFolder,
 } from "../lib/cloudinary/config";
 import {
   isCloudinaryClientUploadContext,
-  resourceTypeFromMime,
 } from "../lib/cloudinary/client-upload-context";
-import { getCloudinaryServer } from "../lib/cloudinary/server";
-
-function uploadBuffer(
-  buffer: Buffer,
-  options: { folder: string; resourceType: "image" | "video" },
-): Promise<UploadApiResponse> {
-  const cloudinary = getCloudinaryServer();
-
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: options.folder,
-        resource_type: options.resourceType,
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else if (!result) reject(new Error("Cloudinary upload returned no result."));
-        else resolve(result);
-      },
-    );
-    stream.end(buffer);
-  });
-}
 
 export const cloudinaryAdapter: Adapter = () => ({
   name: "cloudinary",
 
   /**
-   * When true, Payload Admin uploads via CloudinaryClientUploadHandler (browser → Cloudinary).
-   * Server-side handleUpload remains for small legacy/multipart uploads.
+   * 强制浏览器直传：禁止经 Vercel 中转文件（规避 ~4.5MB 限制与 MIME 路径混淆）。
    */
   clientUploads: {
     access: ({ req }) => Boolean(req.user),
   },
 
-  async handleUpload({ file, clientUploadContext }) {
-    if (isCloudinaryClientUploadContext(clientUploadContext)) {
-      const ctx = clientUploadContext;
-      return {
-        filename: ctx.publicId,
-        url: ctx.secureUrl,
-        mimeType: ctx.mimeType,
-        filesize: ctx.bytes,
-        width: ctx.width,
-        height: ctx.height,
-        cloudinaryPublicId: ctx.publicId,
-      };
+  async handleUpload({ clientUploadContext }) {
+    if (!isCloudinaryClientUploadContext(clientUploadContext)) {
+      throw new APIError(
+        "Media must be uploaded directly from the browser to Cloudinary. Configure NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET (or signing keys), then reload the admin.",
+        400,
+      );
     }
 
-    const resourceType = resourceTypeFromMime(file.mimeType);
-    const folder = resolveUploadFolder(resourceType);
-    const result = await uploadBuffer(file.buffer, { folder, resourceType });
-
+    const ctx = clientUploadContext;
     return {
-      filename: result.public_id,
-      url: result.secure_url,
-      mimeType: file.mimeType,
-      filesize: result.bytes,
-      width: result.width,
-      height: result.height,
-      cloudinaryPublicId: result.public_id,
+      filename: ctx.payloadFilename,
+      url: ctx.secureUrl,
+      mimeType: ctx.mimeType,
+      filesize: ctx.bytes,
+      width: ctx.width,
+      height: ctx.height,
+      cloudinaryPublicId: ctx.publicId,
     };
   },
 
   async handleDelete({ doc }) {
     if (!isCloudinaryConfigured()) return;
 
-    const publicId = doc.filename;
+    const record = doc as {
+      cloudinaryPublicId?: string;
+      filename?: string;
+      mimeType?: string;
+    };
+
+    const publicId =
+      typeof record.cloudinaryPublicId === "string"
+        ? record.cloudinaryPublicId
+        : typeof record.filename === "string"
+          ? record.filename
+          : null;
 
     if (!publicId) return;
 
+    const { getCloudinaryServer } = await import("../lib/cloudinary/server");
     const cloudinary = getCloudinaryServer();
-    const resourceType = String(doc.mimeType ?? "").startsWith("video/")
+    const resourceType = String(record.mimeType ?? "").startsWith("video/")
       ? "video"
       : "image";
 
@@ -118,7 +95,6 @@ export const cloudinaryAdapter: Adapter = () => ({
         clientContext.resourceType === "video" ||
         clientContext.mimeType.startsWith("video/");
 
-      // Avoid pulling multi‑MB video through Vercel when registering the media doc.
       if (isVideo) {
         return new Response(Buffer.alloc(0), {
           status: 200,

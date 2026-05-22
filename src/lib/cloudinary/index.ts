@@ -10,14 +10,28 @@ export {
 export {
   getCloudinaryConfig,
   getCloudinaryPublicConfig,
+  getCloudinaryUploadPreset,
   isCloudinaryConfigured,
+  isCloudinaryClientUploadReady,
   resolveUploadFolder,
   getUploadEndpoint,
   type CloudinaryConfig,
   type CloudinaryResourceType,
 } from "./config";
+export {
+  buildPayloadFilename,
+  mimeFromFormat,
+  resolveMimeType,
+} from "./mime";
 export { getCloudinaryServer } from "./server";
 export { createUploadSignature, type UploadSignaturePayload } from "./sign";
+export {
+  createClientUploadParams,
+  usesUnsignedCloudinaryUpload,
+  type ClientUploadParams,
+  type SignedUploadParams,
+  type UnsignedUploadParams,
+} from "./upload-params";
 export {
   mapCloudinaryResponse,
   type CloudinaryApiResponse,

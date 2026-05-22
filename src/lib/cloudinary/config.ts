@@ -50,6 +50,10 @@ export function getCloudinaryPublicConfig() {
   return { cloudName };
 }
 
+export function getCloudinaryUploadPreset(): string | undefined {
+  return readEnv("NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET");
+}
+
 export function isCloudinaryConfigured(): boolean {
   const cloudName =
     readEnv("CLOUDINARY_CLOUD_NAME") ??
@@ -57,6 +61,14 @@ export function isCloudinaryConfigured(): boolean {
   return Boolean(
     cloudName && readEnv("CLOUDINARY_API_KEY") && readEnv("CLOUDINARY_API_SECRET"),
   );
+}
+
+/** 浏览器直传 Cloudinary（未签名 preset 或完整签名配置） */
+export function isCloudinaryClientUploadReady(): boolean {
+  const cloudName = readEnv("NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME");
+  if (!cloudName) return false;
+  if (getCloudinaryUploadPreset()) return true;
+  return isCloudinaryConfigured();
 }
 
 export function resolveUploadFolder(

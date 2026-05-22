@@ -5,7 +5,10 @@ export type CloudinaryClientUploadContext = {
   publicId: string;
   secureUrl: string;
   resourceType: CloudinaryResourceType;
+  /** 浏览器 File.type 或根据 Cloudinary format 推断的真实 MIME */
   mimeType: string;
+  /** Payload 展示/校验用文件名（含扩展名，非 public_id 路径） */
+  payloadFilename: string;
   bytes: number;
   width?: number;
   height?: number;
@@ -21,7 +24,8 @@ export function isCloudinaryClientUploadContext(
   return (
     typeof ctx.publicId === "string" &&
     typeof ctx.secureUrl === "string" &&
-    typeof ctx.mimeType === "string"
+    typeof ctx.mimeType === "string" &&
+    typeof ctx.payloadFilename === "string"
   );
 }
 
