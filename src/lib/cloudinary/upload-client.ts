@@ -61,6 +61,10 @@ function appendDirectUploadFields(
     formData.append("folder", params.folder);
   }
 
+  if (params.resourceType === "video") {
+    formData.append("resource_type", "video");
+  }
+
   if (extra) {
     for (const [key, value] of Object.entries(extra)) {
       formData.append(key, value);

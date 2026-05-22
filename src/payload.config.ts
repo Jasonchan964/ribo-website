@@ -55,12 +55,20 @@ function buildPostgresPoolConfig(): PoolConfig {
  * 线上 Neon：由 Vercel 构建脚本 scripts/sync-db-schema.ts 在 deploy 前执行一次 push，无需本地 db:push / migrate。
  * PAYLOAD_DISABLE_PUSH=true 可关闭 push（高级）。
  */
+function shouldAutoPushSchema(): boolean {
+  if (process.env.PAYLOAD_DISABLE_PUSH === "true") return false;
+  // Vercel 构建阶段由 scripts/sync-db-schema.ts 执行 push，运行时避免连 Neon 做 schema 同步
+  if (process.env.VERCEL === "1" && process.env.NODE_ENV === "production") {
+    return false;
+  }
+  return true;
+}
+
 function database() {
   if (isPostgresUrl) {
     return postgresAdapter({
       pool: buildPostgresPoolConfig(),
-      push:
-        process.env.PAYLOAD_DISABLE_PUSH === "true" ? false : true,
+      push: shouldAutoPushSchema(),
     });
   }
 
@@ -100,7 +108,8 @@ export default buildConfig({
   sharp,
   plugins: [
     cloudStoragePlugin({
-      enabled: isCloudinaryMediaStorageEnabled(),
+      enabled:
+        isCloudinaryMediaStorageEnabled() || process.env.VERCEL === "1",
       collections: {
         media: {
           adapter: cloudinaryAdapter,

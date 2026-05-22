@@ -2,14 +2,16 @@ import type { CollectionConfig } from "payload";
 import {
   cloudinaryClientUploadBeforeChange,
   cloudinaryClientUploadBeforeValidate,
-} from "../hooks/cloudinary-client-upload";
-import {
   cloudinaryMediaAfterRead,
   getCloudinaryAdminThumbnail,
-} from "../hooks/cloudinary-media-storage";
+} from "../hooks/cloudinary-media-upload";
 import type { CloudinaryMediaDoc } from "@/lib/cloudinary/delivery";
-import { isCloudinaryMediaStorageEnabled } from "@/lib/cloudinary/config";
 
+/**
+ * 媒体仅托管在 Cloudinary：
+ * - disableLocalStorage: true → 永不读写 /var/task/media
+ * - Admin 通过 clientUploads 直传 Cloudinary，保存时只提交 URL / public_id 元数据到 Neon
+ */
 export const Media: CollectionConfig = {
   slug: "media",
   labels: {
@@ -24,13 +26,14 @@ export const Media: CollectionConfig = {
     defaultColumns: ["filename", "mimeType", "updatedAt"],
     group: "内容",
     description:
-      "图片与视频从浏览器直传 Cloudinary（不经 Vercel 本地磁盘）。请使用上传按钮选择文件，等待进度完成后再保存。",
+      "视频/图片请先等待 Cloudinary 直传进度 100%，再点保存。勿将大文件发往服务器。",
   },
   upload: {
     mimeTypes: ["image/*", "video/*"],
     bulkUpload: true,
-    /** 禁止 Payload 在 Vercel 等无状态环境读写 /var/task/media */
-    disableLocalStorage: isCloudinaryMediaStorageEnabled(),
+    disableLocalStorage: true,
+    pasteURL: false,
+    focalPoint: false,
     adminThumbnail: ({ doc }) =>
       getCloudinaryAdminThumbnail(doc as CloudinaryMediaDoc),
   },
@@ -52,7 +55,7 @@ export const Media: CollectionConfig = {
       admin: {
         readOnly: true,
         position: "sidebar",
-        description: "Cloudinary 资源路径（非 MIME），用于删除与 CDN 引用。",
+        description: "Cloudinary 资源路径，用于 CDN 与删除。",
       },
     },
   ],

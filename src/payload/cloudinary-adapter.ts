@@ -9,9 +9,6 @@ import {
 export const cloudinaryAdapter: Adapter = () => ({
   name: "cloudinary",
 
-  /**
-   * 强制浏览器直传：禁止经 Vercel 中转文件（规避 ~4.5MB 限制与 MIME 路径混淆）。
-   */
   clientUploads: {
     access: ({ req }) => Boolean(req.user),
   },
@@ -80,6 +77,10 @@ export const cloudinaryAdapter: Adapter = () => ({
     return url ?? "";
   },
 
+  /**
+   * 客户端直传登记时：返回空 body，避免 Payload 跟随 302 从 Cloudinary 拉回整文件（会卡死并占满 Vercel）。
+   * 真实 URL / 元数据由 clientUploadContext + beforeChange hooks 写入数据库。
+   */
   staticHandler(_req, { doc, params }) {
     const clientContext = isCloudinaryClientUploadContext(
       params?.clientUploadContext,
@@ -88,27 +89,25 @@ export const cloudinaryAdapter: Adapter = () => ({
       : null;
 
     if (clientContext) {
-      const isVideo =
-        clientContext.resourceType === "video" ||
-        clientContext.mimeType.startsWith("video/");
-
-      if (isVideo) {
-        return new Response(Buffer.alloc(0), {
-          status: 200,
-          headers: {
-            "Content-Type": clientContext.mimeType,
-            "Content-Length": "0",
-          },
-        });
-      }
-
-      if (clientContext.secureUrl) {
-        return Response.redirect(clientContext.secureUrl, 302);
-      }
+      return new Response(Buffer.alloc(0), {
+        status: 200,
+        headers: {
+          "Content-Type": clientContext.mimeType,
+          "Content-Length": "0",
+        },
+      });
     }
 
-    const fileDoc = doc as { url?: string | null } | undefined;
-    const url = typeof fileDoc?.url === "string" ? fileDoc.url : "";
+    const fileDoc = doc as { url?: string | null; mimeType?: string | null } | undefined;
+    const url =
+      typeof fileDoc?.url === "string" && fileDoc.url.startsWith("http")
+        ? fileDoc.url
+        : resolveCloudinaryMediaUrl({
+            url: fileDoc?.url ?? null,
+            mimeType: fileDoc?.mimeType ?? null,
+            cloudinaryPublicId: null,
+            filename: null,
+          });
 
     if (!url) {
       return new Response("Not found", { status: 404 });
