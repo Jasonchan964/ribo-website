@@ -43,6 +43,30 @@ async function closeDatabaseConnections(
   }
 }
 
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T | void> {
+  let timeout: NodeJS.Timeout | undefined;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<void>((resolve) => {
+        timeout = setTimeout(() => {
+          console.warn(`[db] ${label} timed out; forcing build to continue`);
+          resolve();
+        }, ms);
+      }),
+    ]);
+  } catch (error) {
+    console.warn(`[db] ${label} failed during cleanup; forcing build to continue`, error);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 async function syncSchema(): Promise<void> {
   const { getPayload } = await import("payload");
   const { default: config } = await import("../src/payload.config");
@@ -54,9 +78,22 @@ async function syncSchema(): Promise<void> {
     payload.logger.info("[db] Vercel build: schema sync finished");
   } finally {
     if (payload) {
-      await payload.destroy();
-      await closeDatabaseConnections(payload.db as PayloadDbWithPool);
+      await withTimeout(payload.destroy(), 5_000, "Payload destroy");
+      await withTimeout(
+        closeDatabaseConnections(payload.db as PayloadDbWithPool),
+        5_000,
+        "Payload db pool close",
+      );
     }
+
+    const { closeSharedPostgresPool } = await import(
+      "../src/lib/database/postgres-pool"
+    );
+    await withTimeout(
+      closeSharedPostgresPool(),
+      5_000,
+      "shared Postgres pool close",
+    );
   }
 }
 

@@ -1,6 +1,6 @@
-import type { Config, Plugin } from "payload";
+import type { Plugin } from "payload";
 import { initClientUploads } from "@payloadcms/plugin-cloud-storage/utilities";
-import { isCloudinaryMediaStorageEnabled } from "@/lib/cloudinary/config";
+import { isCloudinaryClientUploadReady } from "@/lib/cloudinary/config";
 import { cloudinaryClientUploadServerHandler } from "./cloudinary-client-upload-server";
 
 const CLIENT_HANDLER_PATH =
@@ -14,8 +14,8 @@ const SERVER_HANDLER_PATH = "/cloudinary-client-upload";
  */
 export const cloudinaryClientUploadsPlugin: Plugin = (incomingConfig) => {
   const config = { ...incomingConfig };
-  /** 与 Cloudinary 托管一致：有 cloud name 即注册 Admin 直传 handler */
-  const enabled = isCloudinaryMediaStorageEnabled();
+  /** 只有 preset 或签名凭据完整时才启用 Admin 直传 handler。 */
+  const enabled = isCloudinaryClientUploadReady();
 
   // Always register paths so `payload generate:importmap` stays consistent.
   initClientUploads({

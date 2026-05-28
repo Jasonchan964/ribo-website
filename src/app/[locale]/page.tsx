@@ -9,7 +9,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Factory, Gauge, Leaf, Globe2 } from "lucide-react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 type PageProps = {
   params: Promise<{ locale: Locale }>;

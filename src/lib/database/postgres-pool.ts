@@ -60,6 +60,25 @@ function warnIfNotNeonPooler(connectionString: string): void {
   }
 }
 
+function toServerlessConnectionString(connectionString: string): string {
+  if (!isServerlessRuntime()) return connectionString;
+
+  try {
+    const url = new URL(connectionString);
+    const hostname = url.hostname.toLowerCase();
+
+    if (hostname.includes("neon.tech") && !hostname.includes("-pooler")) {
+      const [endpoint, ...rest] = url.hostname.split(".");
+      url.hostname = [`${endpoint}-pooler`, ...rest].join(".");
+      return url.toString();
+    }
+  } catch {
+    /* Keep the original string; pg will surface the real connection error. */
+  }
+
+  return connectionString;
+}
+
 /**
  * Payload connect() 会通过 pool.connect() 长期占用 1 条连接（错误监听），
  * 因此 Serverless 下 max 不能为 1，否则 Admin/查询会全部超时。
@@ -67,11 +86,12 @@ function warnIfNotNeonPooler(connectionString: string): void {
  */
 export function buildPostgresPoolConfig(connectionString: string): PoolConfig {
   const serverless = isServerlessRuntime();
+  const normalizedConnectionString = toServerlessConnectionString(connectionString);
 
-  warnIfNotNeonPooler(connectionString);
+  warnIfNotNeonPooler(normalizedConnectionString);
 
   return {
-    connectionString,
+    connectionString: normalizedConnectionString,
     // Payload 常驻 1 条 connect + 业务查询至少需要再 1 条
     max: serverless ? 2 : 10,
     min: 0,
@@ -103,6 +123,18 @@ export function getSharedPostgresPool(connectionString: string): Pool {
   store.pool = createPool(normalized);
   store.connectionString = normalized;
   return store.pool;
+}
+
+export async function closeSharedPostgresPool(): Promise<void> {
+  const store = getPoolStore();
+  const pool = store.pool;
+
+  store.pool = null;
+  store.connectionString = null;
+
+  if (pool) {
+    await pool.end();
+  }
 }
 
 /**

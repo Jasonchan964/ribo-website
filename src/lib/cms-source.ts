@@ -8,11 +8,18 @@ type CmsContent = {
   caseStudies: CaseStudy[];
 };
 
+function isProductionBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build"
+  );
+}
+
 /**
  * 从 Payload 拉取内容。成功时始终使用 CMS 数据（即使为空数组），仅在未配置或连接失败时返回 null 以回退 Mock。
  */
 async function loadFromPayload(): Promise<CmsContent | null> {
-  if (!isPayloadConfigured()) return null;
+  if (!isPayloadConfigured() || isProductionBuildPhase()) return null;
 
   noStore();
 
@@ -62,7 +69,7 @@ export async function resolveCmsContent(
 export async function getProductFromPayloadBySlug(
   slug: string,
 ): Promise<Product | null> {
-  if (!isPayloadConfigured() || !slug) return null;
+  if (!isPayloadConfigured() || isProductionBuildPhase() || !slug) return null;
 
   let decoded = slug;
   try {

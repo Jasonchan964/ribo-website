@@ -1,6 +1,7 @@
 import type {
   CollectionAfterReadHook,
   CollectionBeforeChangeHook,
+  CollectionBeforeOperationHook,
   CollectionBeforeValidateHook,
 } from "payload";
 import { APIError } from "payload";
@@ -19,6 +20,33 @@ import {
 } from "@/lib/cloudinary/delivery";
 
 const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+const ONE_PIXEL_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+  "base64",
+);
+
+const MINIMAL_MP4_HEADER = Buffer.from([
+  0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70,
+  0x69, 0x73, 0x6f, 0x6d, 0x00, 0x00, 0x02, 0x00,
+  0x69, 0x73, 0x6f, 0x6d, 0x69, 0x73, 0x6f, 0x32,
+]);
+
+function prepareClientUploadPlaceholder(
+  req: Parameters<CollectionBeforeOperationHook>[0]["req"],
+): void {
+  const ctx = getCloudinaryClientUploadContext(req);
+  if (!ctx || !req.file) return;
+
+  const placeholder =
+    ctx.resourceType === "video" ? MINIMAL_MP4_HEADER : ONE_PIXEL_PNG;
+
+  req.file.name = ctx.payloadFilename;
+  req.file.mimetype = ctx.mimeType;
+  req.file.data = placeholder;
+  req.file.size = ctx.bytes;
+  delete req.file.tempFilePath;
+}
 
 function applyClientContext<T extends Record<string, unknown>>(
   data: T | undefined,
@@ -66,6 +94,15 @@ function enforceDirectUploadOnly(
 
 export const cloudinaryClientUploadBeforeValidate: CollectionBeforeValidateHook =
   ({ data, req }) => applyClientContext(data, req);
+
+export const cloudinaryClientUploadBeforeOperation: CollectionBeforeOperationHook =
+  ({ args, operation, req }) => {
+    if (operation === "create") {
+      prepareClientUploadPlaceholder(req);
+    }
+
+    return args;
+  };
 
 export const cloudinaryClientUploadBeforeChange: CollectionBeforeChangeHook = ({
   data,

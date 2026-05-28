@@ -92,8 +92,7 @@ src/
 | `CLOUDINARY_IMAGE_FOLDER` | No | 产品图目录，默认 `ribo/products/images` |
 | `CLOUDINARY_VIDEO_FOLDER` | No | 机器视频目录，默认 `ribo/products/videos` |
 | `PAYLOAD_SECRET` | Yes (CMS) | Payload 会话与 API 签名密钥 |
-| `DATABASE_URL` | **Yes on Vercel** | 生产：Neon **Pooled** 连接串（主机名含 `-pooler`，含 `sslmode=require`）。勿在代码里改写 URL。本地可省略，默认 SQLite |
-| `DATABASE_POOL_MAX` | No | 覆盖 pg 池大小；Vercel 默认 `1`，本地默认 `10` |
+| `DATABASE_URL` | **Yes on Vercel** | 生产：`postgresql://…`（Neon 等）。本地：可省略，默认 `file:./ribo-cms.db`（SQLite） |
 | `PAYLOAD_DISABLE_PUSH` | No | 设为 `true` 则关闭自动建表（高级：改用 migrate） |
 | `CMS_ADMIN_EMAIL` | No | `npm run seed:cms` 使用的管理员邮箱 |
 | `CMS_ADMIN_PASSWORD` | No | `npm run seed:cms` 使用的初始密码 |

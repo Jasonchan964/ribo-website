@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import {
   cloudinaryClientUploadBeforeChange,
+  cloudinaryClientUploadBeforeOperation,
   cloudinaryClientUploadBeforeValidate,
   cloudinaryMediaAfterRead,
   getCloudinaryAdminThumbnail,
@@ -38,6 +39,7 @@ export const Media: CollectionConfig = {
       getCloudinaryAdminThumbnail(doc as CloudinaryMediaDoc),
   },
   hooks: {
+    beforeOperation: [cloudinaryClientUploadBeforeOperation],
     beforeValidate: [cloudinaryClientUploadBeforeValidate],
     beforeChange: [cloudinaryClientUploadBeforeChange],
     afterRead: [cloudinaryMediaAfterRead],

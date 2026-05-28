@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:lan": "next dev --hostname 0.0.0.0",
+    "prebuild": "tsx scripts/sync-db-schema.ts",
     "build": "next build",
     "start": "next start",
     "start:lan": "next start --hostname 0.0.0.0",

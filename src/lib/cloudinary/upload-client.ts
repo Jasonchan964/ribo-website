@@ -8,6 +8,10 @@ import { mimeFromFilename } from "@/lib/cloudinary/mime";
 const CHUNK_THRESHOLD_BYTES = 20 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 6 * 1024 * 1024;
 
+type CloudinaryChunkApiResponse = CloudinaryApiResponse & {
+  done?: boolean;
+};
+
 export type UploadMediaOptions = {
   file: File;
   resourceType: CloudinaryResourceType;
@@ -129,6 +133,24 @@ function parseCloudinaryUploadResponse(
   return mapCloudinaryResponse(data);
 }
 
+function parseCloudinaryChunkResponse(
+  status: number,
+  bodyText: string,
+): CloudinaryChunkApiResponse {
+  let data: CloudinaryChunkApiResponse;
+  try {
+    data = JSON.parse(bodyText) as CloudinaryChunkApiResponse;
+  } catch {
+    throw new Error("Invalid response from Cloudinary.");
+  }
+
+  if (status >= 400 || data.error) {
+    throw new Error(data.error?.message ?? "Cloudinary upload failed.");
+  }
+
+  return data;
+}
+
 /**
  * 标准直传：仅 POST + FormData，由浏览器生成 multipart boundary。
  * 切勿设置 Content-Type（勿用 text/plain / application/json）。
@@ -193,9 +215,13 @@ async function uploadChunked(
   const total = file.size;
   const chunkSize = CHUNK_SIZE_BYTES;
   let start = 0;
-  let result: CloudinaryUploadResult | null = null;
   const uploadUrl = params.uploadUrl;
   const chunkMime = file.type || mimeFromFilename(file.name, params.resourceType);
+  const uploadId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  let finalResponse: CloudinaryChunkApiResponse | null = null;
 
   while (start < total) {
     const end = Math.min(start + chunkSize, total);
@@ -207,26 +233,34 @@ async function uploadChunked(
     const formData = buildUploadFormData(
       new File([chunkBlob], file.name, { type: chunkMime }),
       params,
-      { chunk_size: String(chunkSize) },
     );
 
-    result = await uploadToCloudinary(uploadUrl, formData, (chunkPercent) => {
-      if (!onProgress) return;
-      const overall = Math.round(
-        ((start + (chunkPercent / 100) * (end - start)) / total) * 100,
-      );
-      onProgress(Math.min(overall, 99));
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Range": `bytes ${start}-${end - 1}/${total}`,
+        "X-Unique-Upload-Id": uploadId,
+      },
+      body: formData,
     });
 
+    const bodyText = await response.text();
+    const data = parseCloudinaryChunkResponse(response.status, bodyText);
+
     start = end;
+    onProgress?.(Math.min(Math.round((start / total) * 100), 99));
+
+    if (data.done === true || start === total) {
+      finalResponse = data;
+    }
   }
 
-  if (!result) {
-    throw new Error("Chunked upload produced no result.");
+  if (!finalResponse || finalResponse.done === false) {
+    throw new Error("Chunked upload did not complete.");
   }
 
   onProgress?.(100);
-  return result;
+  return mapCloudinaryResponse(finalResponse);
 }
 
 /**

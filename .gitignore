@@ -46,6 +46,8 @@ next-env.d.ts
 # Payload CMS
 ribo-cms.db
 ribo-cms.db-*
+*.sqlite
+*.sqlite-*
 .payload
 src/payload/payload-types.ts
 

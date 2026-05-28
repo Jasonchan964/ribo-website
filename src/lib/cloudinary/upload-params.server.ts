@@ -2,7 +2,7 @@ import {
   getCloudinaryPublicConfig,
   getCloudinaryUploadPreset,
   getUploadEndpoint,
-  resolveUploadFolder,
+  resolveUploadFolderPublic,
   type CloudinaryResourceType,
 } from "./config";
 import { createUploadSignature } from "./sign.server";
@@ -14,11 +14,11 @@ export function createClientUploadParams(options: {
   folder?: string;
 }): ClientUploadParams {
   const resourceType = options.resourceType ?? "image";
-  const folder = resolveUploadFolder(resourceType, options.folder);
   const preset = getCloudinaryUploadPreset();
 
   if (preset) {
     const { cloudName } = getCloudinaryPublicConfig();
+    const folder = resolveUploadFolderPublic(resourceType, options.folder);
     return {
       mode: "unsigned",
       cloudName,
@@ -31,6 +31,9 @@ export function createClientUploadParams(options: {
 
   return {
     mode: "signed",
-    ...createUploadSignature({ resourceType, folder }),
+    ...createUploadSignature({
+      resourceType,
+      folder: options.folder,
+    }),
   };
 }
